@@ -26,7 +26,7 @@
 #define GDCC_VERSION_MINOR     0
 #define GDCC_VERSION_PATCH     0
 
-#define GDCC_VERSION_TEXT      "V3.0.0-alpha1"
+#define GDCC_VERSION_TEXT      "V3.1.0-alpha1"
 
 //======================================================
 // Compilation

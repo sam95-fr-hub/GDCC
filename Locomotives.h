@@ -3,6 +3,8 @@
  * GDCC
  * Gestion des locomotives
  *
+ * Version V3.1
+ *
  ******************************************************************************/
 
 #ifndef LOCOMOTIVES_H
@@ -22,10 +24,7 @@
 //======================================================
 // Structure locomotive
 //
-// Contient uniquement les informations nécessaires
-// à la sélection de la locomotive.
-//
-// Les données sont stockées en mémoire Flash.
+// Les paramètres sont stockés en mémoire Flash.
 //======================================================
 
 struct Locomotive
@@ -40,24 +39,36 @@ struct Locomotive
 // Tableau des locomotives
 //======================================================
 
-extern const Locomotive locomotives[LOCOMOTIVE_COUNT] PROGMEM;
+extern const Locomotive locomotives[
+    LOCOMOTIVE_COUNT
+] PROGMEM;
 
 
 //======================================================
 // Fonctions
 //======================================================
 
-// Recherche la locomotive correspondant
-// à la tension du sélecteur
-
 uint8_t Locomotives_GetIndex(
-    float voltage);
+    float voltage
+);
 
-
-// Retourne le Radio ID de la locomotive
 
 uint8_t Locomotives_GetRadioId(
-    uint8_t index);
+    uint8_t index
+);
+
+
+//======================================================
+// Récupération du nom de la locomotive
+//
+// Le nom est copié depuis la Flash vers le buffer.
+//======================================================
+
+void Locomotives_GetName(
+    uint8_t index,
+    char* buffer,
+    uint8_t bufferSize
+);
 
 
 #endif
