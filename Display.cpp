@@ -11,7 +11,7 @@
 #include "Display.h"
 #include "Locomotives.h"
 #include "Battery.h"
-#include "logo.h"
+#include "Logo.h"
 
 #include <Wire.h>
 #include <U8g2lib.h>
