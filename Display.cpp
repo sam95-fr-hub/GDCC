@@ -1,12 +1,14 @@
 /******************************************************************************
- *
- * GDCC
- * Gestion de l'affichage OLED
- *
- * Version V3.1
- * U8g2 mode PAGE
- *
- ******************************************************************************/
+*
+
+* GDCC
+* Gestion de l'affichage OLED
+*
+* Version V3.1
+* U8g2 mode PAGE
+*
+
+******************************************************************************/
 
 #include "Display.h"
 #include "Locomotives.h"
@@ -16,7 +18,6 @@
 #include <Wire.h>
 #include <U8g2lib.h>
 
-
 //======================================================
 // Objet OLED
 //
@@ -24,10 +25,9 @@
 //======================================================
 
 U8G2_SH1106_128X64_NONAME_1_HW_I2C display(
-    U8G2_R0,
-    U8X8_PIN_NONE
+U8G2_R0,
+U8X8_PIN_NONE
 );
-
 
 //======================================================
 // Etats précédents
@@ -43,49 +43,110 @@ static bool lastARU = false;
 
 static float lastBatteryVoltage = -1.0;
 
-
 //======================================================
 // Initialisation OLED
 //======================================================
 
 void Display_Init()
 {
-    display.begin();
-
-    display.setPowerSave(0);
-
-    display.setFlipMode(1);
+display.begin();
 
 
-    //==================================================
-    // ECRAN 1 : LOGO
-    //==================================================
+display.setPowerSave(0);
 
-    display.firstPage();
+display.setFlipMode(1);
 
-    do
-    {
-        display.drawXBMP(
-            32,
-            0,
-            64,
-            64,
-            logoBitmap
-        );
 
-    }
-    while (
-        display.nextPage()
+//==================================================
+// ECRAN 1 : LOGO
+//==================================================
+
+display.firstPage();
+
+do
+{
+    display.drawXBMP(
+        32,
+        0,
+        64,
+        64,
+        logoBitmap
+    );
+
+}
+while (
+    display.nextPage()
+);
+
+
+delay(2000);
+
+
+//==================================================
+// ECRAN 2 : VERSION
+//==================================================
+
+display.firstPage();
+
+do
+{
+    display.setFont(
+        u8g2_font_6x10_tf
     );
 
 
-    delay(2000);
+    display.setCursor(
+        20,
+        20
+    );
+
+    display.print(
+        F("GDCC HANDSET")
+    );
 
 
-    //==================================================
-    // ECRAN 2 : VERSION
-    //==================================================
+    display.setCursor(
+        42,
+        38
+    );
 
+    display.print(
+        F("V3.1")
+    );
+
+
+    display.setCursor(
+        20,
+        56
+    );
+
+    display.print(
+        F("INITIALISATION")
+    );
+
+}
+while (
+    display.nextPage()
+);
+
+
+delay(2000);
+
+
+//==================================================
+// ECRAN 3 : BATTERIE FAIBLE
+//
+// Affiché uniquement si batterie < 6.4V
+//==================================================
+
+float batteryVoltage =
+    Battery_ReadVoltage();
+
+
+if (
+    batteryVoltage < 6.4
+)
+{
     display.firstPage();
 
     do
@@ -96,32 +157,42 @@ void Display_Init()
 
 
         display.setCursor(
-            20,
-            20
+            34,
+            16
         );
 
         display.print(
-            F("GDCC HANDSET")
+            F("BATTERIE")
         );
 
 
         display.setCursor(
-            42,
-            38
+            34,
+            28
         );
 
         display.print(
-            F("V3.1")
+            F("FAIBLE")
         );
 
 
         display.setCursor(
-            20,
+            30,
+            44
+        );
+
+        display.print(
+            F("CHARGER")
+        );
+
+
+        display.setCursor(
+            30,
             56
         );
 
         display.print(
-            F("INITIALISATION")
+            F("BATTERIE")
         );
 
     }
@@ -130,339 +201,324 @@ void Display_Init()
     );
 
 
-    delay(2000);
-
-
-    //==================================================
-    // ECRAN 3 : BATTERIE FAIBLE
-    //
-    // Affiché uniquement si batterie < 6.4V
-    //==================================================
-
-    float batteryVoltage =
-        Battery_ReadVoltage();
-
-
-    if (
-        batteryVoltage < 6.4
-    )
-    {
-        display.firstPage();
-
-        do
-        {
-            display.setFont(
-                u8g2_font_6x10_tf
-            );
-
-
-            display.setCursor(
-                34,
-                16
-            );
-
-            display.print(
-                F("BATTERIE")
-            );
-
-
-            display.setCursor(
-                34,
-                28
-            );
-
-            display.print(
-                F("FAIBLE")
-            );
-
-
-            display.setCursor(
-                30,
-                44
-            );
-
-            display.print(
-                F("CHARGER")
-            );
-
-
-            display.setCursor(
-                30,
-                56
-            );
-
-            display.print(
-                F("BATTERIE")
-            );
-
-        }
-        while (
-            display.nextPage()
-        );
-
-
-        delay(3000);
-    }
-
-
-    //==================================================
-    // Forcer premier affichage
-    //==================================================
-
-    lastLoco = 255;
-
-    lastPot = -1;
-
-    lastLight = false;
-
-    lastARU = false;
-
-    lastBatteryVoltage = -1.0;
+    delay(3000);
 }
 
+
+//==================================================
+// Forcer premier affichage
+//==================================================
+
+lastLoco = 255;
+
+lastPot = -1;
+
+lastLight = false;
+
+lastARU = false;
+
+lastBatteryVoltage = -1.0;
+
+
+}
 
 //======================================================
 // Affichage principal
 //======================================================
 
 void Display_Update(
-    const HandsetState &state,
-    int potValue
+const HandsetState &state,
+int potValue
 )
 {
-    bool needUpdate = false;
+bool needUpdate = false;
 
 
-    //==================================================
-    // Lecture tension batterie
-    //==================================================
+//==================================================
+// Lecture tension batterie
+//==================================================
 
-    float batteryVoltage =
-        Battery_ReadVoltage();
-
-
-    //==================================================
-    // Détection changements
-    //==================================================
-
-    if (
-        state.loco != lastLoco
-    )
-    {
-        needUpdate = true;
-    }
+float batteryVoltage =
+    Battery_ReadVoltage();
 
 
-    if (
-        potValue != lastPot
-    )
-    {
-        needUpdate = true;
-    }
+//==================================================
+// Détection changements
+//==================================================
+
+if (
+    state.loco != lastLoco
+)
+{
+    needUpdate = true;
+}
 
 
-    if (
-        state.light != lastLight
-    )
-    {
-        needUpdate = true;
-    }
+if (
+    potValue != lastPot
+)
+{
+    needUpdate = true;
+}
 
 
-    if (
-        state.emergencyStop != lastARU
-    )
-    {
-        needUpdate = true;
-    }
+if (
+    state.light != lastLight
+)
+{
+    needUpdate = true;
+}
 
 
-    //==================================================
-    // Mise à jour affichage batterie
-    // Uniquement si variation >= 0.1V
-    //==================================================
-
-    if (
-        abs(
-            batteryVoltage -
-            lastBatteryVoltage
-        ) >= 0.1
-    )
-    {
-        needUpdate = true;
-    }
+if (
+    state.emergencyStop != lastARU
+)
+{
+    needUpdate = true;
+}
 
 
-    //==================================================
-    // Aucun changement
-    //==================================================
+//==================================================
+// Mise à jour affichage batterie
+// Uniquement si variation >= 0.1V
+//==================================================
 
-    if (!needUpdate)
-    {
-        return;
-    }
-
-
-    //==================================================
-    // Récupération nom locomotive
-    //==================================================
-
-    char locoName[16];
-
-
-    uint8_t locoIndex =
-        state.loco - 10;
+if (
+    abs(
+        batteryVoltage -
+        lastBatteryVoltage
+    ) >= 0.1
+)
+{
+    needUpdate = true;
+}
 
 
-    Locomotives_GetName(
-        locoIndex,
-        locoName,
-        sizeof(locoName)
+//==================================================
+// Aucun changement
+//==================================================
+
+if (!needUpdate)
+{
+    return;
+}
+
+
+//==================================================
+// Récupération nom locomotive
+//==================================================
+
+char locoName[16];
+
+
+uint8_t locoIndex =
+    state.loco - 10;
+
+
+Locomotives_GetName(
+    locoIndex,
+    locoName,
+    sizeof(locoName)
+);
+
+
+//==================================================
+// Calcul direction
+//==================================================
+
+uint8_t directionState;
+
+
+if (
+    potValue >= 450 &&
+    potValue <= 570
+)
+{
+    directionState =
+        0;
+}
+else if (
+    potValue < 450
+)
+{
+    directionState =
+        2;
+}
+else
+{
+    directionState =
+        1;
+}
+
+
+//==================================================
+// Calcul vitesse barre
+//==================================================
+
+int speed =
+    0;
+
+
+if (
+    potValue > 570
+)
+{
+    speed =
+        map(
+            potValue,
+            570,
+            1023,
+            0,
+            110
+        );
+}
+else if (
+    potValue < 450
+)
+{
+    speed =
+        map(
+            potValue,
+            450,
+            0,
+            0,
+            110
+        );
+}
+
+
+if (
+    speed < 0
+)
+{
+    speed = 0;
+}
+
+
+if (
+    speed > 110
+)
+{
+    speed = 110;
+}
+
+
+//==================================================
+// Dessin complet écran
+//
+// Mode PAGE :
+// tout le dessin doit être répété
+// entre firstPage() et nextPage()
+//==================================================
+
+display.firstPage();
+
+do
+{
+    //================================================
+    // NOM LOCOMOTIVE
+    // Ligne 1
+    //================================================
+
+    display.setFont(
+        u8g2_font_helvB12_tf
     );
 
 
-    //==================================================
-    // Calcul direction
-    //==================================================
-
-    uint8_t directionState;
-
-
-    if (
-        potValue >= 450 &&
-        potValue <= 570
-    )
-    {
-        directionState =
-            0;
-    }
-    else if (
-        potValue < 450
-    )
-    {
-        directionState =
-            2;
-    }
-    else
-    {
-        directionState =
-            1;
-    }
-
-
-    //==================================================
-    // Calcul vitesse barre
-    //==================================================
-
-    int speed =
-        0;
-
-
-    if (
-        potValue > 570
-    )
-    {
-        speed =
-            map(
-                potValue,
-                570,
-                1023,
-                0,
-                110
-            );
-    }
-    else if (
-        potValue < 450
-    )
-    {
-        speed =
-            map(
-                potValue,
-                450,
-                0,
-                0,
-                110
-            );
-    }
-
-
-    if (
-        speed < 0
-    )
-    {
-        speed = 0;
-    }
-
-
-    if (
-        speed > 110
-    )
-    {
-        speed = 110;
-    }
-
-
-    //==================================================
-    // Dessin complet écran
-    //
-    // Mode PAGE :
-    // tout le dessin doit être répété
-    // entre firstPage() et nextPage()
-    //==================================================
-
-    display.firstPage();
-
-    do
-    {
-        //================================================
-        // NOM LOCOMOTIVE
-        //================================================
-
-        display.setFont(
-            u8g2_font_helvB12_tf
-        );
-
-
-        uint16_t nameWidth =
-            display.getStrWidth(
-                locoName
-            );
-
-
-        int nameX =
-            (128 - nameWidth) / 2;
-
-
-        if (
-            nameX < 0
-        )
-        {
-            nameX = 0;
-        }
-
-
-        display.setCursor(
-            nameX,
-            14
-        );
-
-
-        display.print(
+    uint16_t nameWidth =
+        display.getStrWidth(
             locoName
         );
 
 
-        //================================================
-        // ID
-        //================================================
+    int nameX =
+        (128 - nameWidth) / 2;
+
+
+    if (
+        nameX < 0
+    )
+    {
+        nameX = 0;
+    }
+
+
+    display.setCursor(
+        nameX,
+        14
+    );
+
+
+    display.print(
+        locoName
+    );
+
+
+    //================================================
+    // FONCTIONNEMENT NORMAL
+    //================================================
+
+    if (
+        !state.emergencyStop
+    )
+    {
+        //============================================
+        // LIGNE 2 : DIRECTION A GAUCHE
+        //============================================
 
         display.setFont(
             u8g2_font_6x10_tf
         );
 
 
+        if (
+            directionState == 0
+        )
+        {
+            display.setCursor(
+                4,
+                25
+            );
+
+
+            display.print(
+                F("ARRET")
+            );
+        }
+        else if (
+            directionState == 1
+        )
+        {
+            display.setCursor(
+                4,
+                25
+            );
+
+
+            display.print(
+                F("^ AVANT")
+            );
+        }
+        else
+        {
+            display.setCursor(
+                4,
+                25
+            );
+
+
+            display.print(
+                F("v ARRIERE")
+            );
+        }
+
+
+        //============================================
+        // LIGNE 2 : ID A DROITE
+        //============================================
+
         display.setCursor(
-            52,
+            88,
             25
         );
 
@@ -477,187 +533,138 @@ void Display_Update(
         );
 
 
-        //================================================
-        // ARU
-        //================================================
+        //============================================
+        // BARRE VITESSE
+        //============================================
+
+        display.drawFrame(
+            9,
+            31,
+            110,
+            8
+        );
+
 
         if (
-            state.emergencyStop
+            speed > 0
         )
         {
-            display.setCursor(
-                32,
-                39
-            );
-
-
-            display.print(
-                F("!!! ARU !!!")
-            );
-
-
-            display.setCursor(
-                20,
-                56
-            );
-
-
-            display.print(
-                F("ARRET URGENCE")
+            display.drawBox(
+                11,
+                33,
+                speed,
+                4
             );
         }
 
 
-        //================================================
-        // FONCTIONNEMENT NORMAL
-        //================================================
+        //============================================
+        // ICONE LUMIERE 14x14
+        //============================================
 
-        else
+        if (
+            state.light
+        )
         {
-            //============================================
-            // DIRECTION
-            //============================================
-
-            if (
-                directionState == 0
-            )
-            {
-                display.setCursor(
-                    48,
-                    38
-                );
-
-
-                display.print(
-                    F("ARRET")
-                );
-            }
-            else if (
-                directionState == 1
-            )
-            {
-                display.setCursor(
-                    38,
-                    38
-                );
-
-
-                display.print(
-                    F("^ AVANT")
-                );
-            }
-            else
-            {
-                display.setCursor(
-                    34,
-                    38
-                );
-
-
-                display.print(
-                    F("v ARRIERE")
-                );
-            }
-
-
-            //============================================
-            // BARRE VITESSE
-            //============================================
-
-            display.drawFrame(
-                9,
-                42,
-                110,
-                8
-            );
-
-
-            if (
-                speed > 0
-            )
-            {
-                display.drawBox(
-                    11,
-                    44,
-                    speed,
-                    4
-                );
-            }
-
-
-            //============================================
-            // ICONE LUMIERE
-            //============================================
-
-            if (
-                state.light
-            )
-            {
-                display.setCursor(
-                    4,
-                    63
-                );
-
-
-                display.print(
-                    F("[*]")
-                );
-            }
-
-
-            //============================================
-            // TENSION BATTERIE
-            //============================================
-
-            char batteryText[8];
-
-
-            dtostrf(
-                batteryVoltage,
+            display.drawXBMP(
                 4,
-                1,
-                batteryText
-            );
-
-
-            display.setCursor(
-                88,
-                63
-            );
-
-
-            display.print(
-                batteryText
-            );
-
-
-            display.print(
-                F("V")
+                50,
+                14,
+                14,
+                lightBitmap
             );
         }
 
+
+        //============================================
+        // TENSION BATTERIE EN BAS A DROITE
+        //============================================
+
+        char batteryText[8];
+
+
+        dtostrf(
+            batteryVoltage,
+            4,
+            1,
+            batteryText
+        );
+
+
+        display.setCursor(
+            88,
+            63
+        );
+
+
+        display.print(
+            batteryText
+        );
+
+
+        display.print(
+            F("V")
+        );
     }
-    while (
-        display.nextPage()
-    );
 
 
-    //==================================================
-    // Sauvegarde états
-    //==================================================
+    //================================================
+    // ARRET D'URGENCE
+    //================================================
 
-    lastLoco =
-        state.loco;
+    else
+    {
+        display.setFont(
+            u8g2_font_6x10_tf
+        );
 
-    lastPot =
-        potValue;
 
-    lastLight =
-        state.light;
+        display.setCursor(
+            32,
+            39
+        );
 
-    lastARU =
-        state.emergencyStop;
 
-    lastBatteryVoltage =
-        batteryVoltage;
+        display.print(
+            F("!!! ARU !!!")
+        );
+
+
+        display.setCursor(
+            20,
+            56
+        );
+
+
+        display.print(
+            F("ARRET URGENCE")
+        );
+    }
+
+}
+while (
+    display.nextPage()
+);
+
+
+//==================================================
+// Sauvegarde états
+//==================================================
+
+lastLoco =
+    state.loco;
+
+lastPot =
+    potValue;
+
+lastLight =
+    state.light;
+
+lastARU =
+    state.emergencyStop;
+
+lastBatteryVoltage =
+    batteryVoltage;
+
+
 }

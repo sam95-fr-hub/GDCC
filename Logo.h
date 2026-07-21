@@ -4,5 +4,6 @@
 #include <Arduino.h>
 
 extern const unsigned char logoBitmap[];
+extern const unsigned char lightBitmap[];
 
 #endif
