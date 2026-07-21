@@ -1,33 +1,29 @@
 /******************************************************************************
  *
  * GDCC
- * Gestion des entrées de la télécommande
+ * Gestion de la communication radio NRF24L01
  *
  ******************************************************************************/
 
-#ifndef INPUTS_H
-#define INPUTS_H
+#ifndef RADIO_H
+#define RADIO_H
 
 #include <Arduino.h>
 #include "Types.h"
 
 //======================================================
-// Initialisation
+// Initialisation du module radio
 //======================================================
 
-void Inputs_Init();
+bool Radio_Init();
 
 //======================================================
-// Mise à jour de l'état de la télécommande
+// Envoi d'un paquet
 //======================================================
 
-void Inputs_Update(HandsetState &state);
-
-//======================================================
-// Lecture du sélecteur de locomotive
-//======================================================
-
-// Retourne l'index de la locomotive (0 à 11)
-uint8_t Inputs_ReadLocoSelector();
+bool Radio_Send(
+    uint8_t destinationId,
+    const RadioPacket &packet
+);
 
 #endif

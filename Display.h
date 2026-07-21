@@ -1,33 +1,30 @@
 /******************************************************************************
  *
  * GDCC
- * Gestion des entrées de la télécommande
+ * Gestion de l'affichage OLED
  *
  ******************************************************************************/
 
-#ifndef INPUTS_H
-#define INPUTS_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
-#include <Arduino.h>
 #include "Types.h"
 
 //======================================================
 // Initialisation
 //======================================================
 
-void Inputs_Init();
+void Display_Init();
+
 
 //======================================================
-// Mise à jour de l'état de la télécommande
+// Affichage principal
 //======================================================
 
-void Inputs_Update(HandsetState &state);
-
-//======================================================
-// Lecture du sélecteur de locomotive
-//======================================================
-
-// Retourne l'index de la locomotive (0 à 11)
-uint8_t Inputs_ReadLocoSelector();
+void Display_Update(
+    const HandsetState &state,
+    const char* locoName,
+    int potValue
+);
 
 #endif

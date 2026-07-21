@@ -1,30 +1,205 @@
 /******************************************************************************
  *
- * GDCC
- * Garden Digital Command Control
+ * GDCC Handset V3.0
+ * TEST OLED + INPUTS
  *
- * Version 3.0.0-alpha1
+ * Test :
+ * - Sélecteur 12 positions
+ * - Throttle
+ * - LIGHT
+ * - ARU
+ * - OLED dynamique
+ *
+ * Pas de :
+ * - Lecture batterie
+ * - NRF24L01
  *
  ******************************************************************************/
 
-#include "Version.h"
+#include <Arduino.h>
+
 #include "Config.h"
 #include "Types.h"
-
 #include "Inputs.h"
-#include "Battery.h"
+#include "Locomotives.h"
+#include "Display.h"
+
+
+//======================================================
+// Etat de la télécommande
+//======================================================
 
 HandsetState handset;
 
+
+//======================================================
+// SETUP
+//======================================================
+
 void setup()
 {
+    Serial.begin(9600);
+
+    delay(500);
+
+    Serial.println();
+    Serial.println("==============================");
+    Serial.println("GDCC HANDSET V3.0");
+    Serial.println("TEST OLED + INPUTS");
+    Serial.println("==============================");
+
+
+    //==================================================
+    // Initialisation des entrées
+    //==================================================
+
     Inputs_Init();
-    Battery_Init();
+
+    Serial.println("INPUTS OK");
+
+
+    //==================================================
+    // Initialisation OLED
+    //==================================================
+
+    Display_Init();
+
+    Serial.println("OLED OK");
+
+
+    //==================================================
+    // Etat initial
+    //==================================================
+
+    handset.loco =
+        Locomotives_GetRadioId(0);
+
+    handset.throttle = 0;
+
+    handset.directionForward = true;
+
+    handset.light = false;
+
+    handset.emergencyStop = false;
+
+    handset.batteryVoltage = 0.0;
+
+
+    Serial.println("SYSTEME PRET");
+
+    delay(1000);
 }
+
+
+//======================================================
+// LOOP
+//======================================================
 
 void loop()
 {
+    //==================================================
+    // 1. Lecture des entrées
+    //==================================================
+
     Inputs_Update(handset);
 
-    handset.batteryVoltage = Battery_ReadVoltage();
+
+    //==================================================
+    // 2. Recherche de l'index de la locomotive
+    //==================================================
+
+    uint8_t locoIndex = 0;
+
+    for (uint8_t i = 0;
+         i < LOCOMOTIVE_COUNT;
+         i++)
+    {
+        if (Locomotives_GetRadioId(i) == handset.loco)
+        {
+            locoIndex = i;
+            break;
+        }
+    }
+
+
+    //==================================================
+    // 3. Récupération du nom
+    //==================================================
+
+    char locoName[20];
+
+    Locomotives_GetName(
+        locoIndex,
+        locoName,
+        sizeof(locoName)
+    );
+
+
+    //==================================================
+    // 4. Lecture brute du throttle
+    //==================================================
+
+    int potValue =
+        analogRead(PIN_THROTTLE);
+
+
+    //==================================================
+    // 5. Mise à jour OLED
+    //==================================================
+
+    Display_Update(
+        handset,
+        locoName,
+        potValue
+    );
+
+
+    //==================================================
+    // 6. Moniteur série
+    //==================================================
+
+    Serial.print("LOCO : ");
+    Serial.print(locoName);
+
+    Serial.print(" | ID : ");
+    Serial.print(handset.loco);
+
+    Serial.print(" | THROTTLE : ");
+    Serial.print(potValue);
+
+    Serial.print(" | DIRECTION : ");
+
+    if (handset.throttle == 0)
+    {
+        Serial.print("STOP");
+    }
+    else if (handset.directionForward)
+    {
+        Serial.print("AVANT");
+    }
+    else
+    {
+        Serial.print("ARRIERE");
+    }
+
+    Serial.print(" | LIGHT : ");
+
+    if (handset.light)
+        Serial.print("ON");
+    else
+        Serial.print("OFF");
+
+    Serial.print(" | ARU : ");
+
+    if (handset.emergencyStop)
+        Serial.println("ACTIF");
+    else
+        Serial.println("INACTIF");
+
+
+    //==================================================
+    // 7. Rafraîchissement lent
+    //==================================================
+
+    delay(500);
 }

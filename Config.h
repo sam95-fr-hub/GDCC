@@ -39,6 +39,10 @@ const uint8_t PIN_LIGHT = 3;
 // NRF24L01
 //======================================================
 
+// Identifiant radio de la télécommande
+const uint8_t RADIO_ID = 1;
+
+// Broches du module NRF24L01
 const uint8_t PIN_NRF_CE  = 9;
 const uint8_t PIN_NRF_CSN = 10;
 

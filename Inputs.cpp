@@ -1,75 +1,191 @@
 /******************************************************************************
  *
  * GDCC
- * Inputs.cpp
+ * Gestion des entrées de la télécommande
  *
  ******************************************************************************/
 
 #include "Inputs.h"
 #include "Config.h"
+#include "Locomotives.h"
+
+
+//======================================================
+// Initialisation
+//======================================================
 
 void Inputs_Init()
 {
+    // Sélecteur locomotive
+    pinMode(PIN_SELECTOR, INPUT);
+
+    // Potentiomètre throttle
+    pinMode(PIN_THROTTLE, INPUT);
+
+    // Arrêt d'urgence
     pinMode(PIN_ESTOP, INPUT_PULLUP);
+
+    // Éclairage
     pinMode(PIN_LIGHT, INPUT_PULLUP);
+
+    // Batterie
+    pinMode(PIN_BATTERY, INPUT);
 }
+
+
+//======================================================
+// Mise à jour de l'état
+//======================================================
 
 void Inputs_Update(HandsetState &state)
 {
-    //-------------------------------------------------
-    // Potentiomètre
-    //-------------------------------------------------
+    //==================================================
+    // 1. SELECTEUR DE LOCOMOTIVE
+    //==================================================
 
-    int value = analogRead(PIN_THROTTLE);
+    int selectorADC =
+        analogRead(PIN_SELECTOR);
+
+
+    float selectorVoltage =
+        selectorADC *
+        (5.0 / 1023.0);
+
+
+    uint8_t locoIndex =
+        Locomotives_GetIndex(
+            selectorVoltage);
+
+
+    state.loco =
+        Locomotives_GetRadioId(
+            locoIndex);
+
+
+    //==================================================
+    // 2. THROTTLE
+    //==================================================
+
+    int value =
+        analogRead(PIN_THROTTLE);
+
+
+    // Zone morte centrale
 
     if (abs(value - 512) < DEAD_ZONE)
     {
         state.throttle = 0;
-        state.directionForward = true;
+
+        state.directionForward =
+            true;
     }
+
+    else if (value > 512)
+    {
+        // Marche avant
+
+        state.directionForward =
+            true;
+
+
+        state.throttle =
+            map(value,
+                512 + DEAD_ZONE,
+                1023,
+                0,
+                255);
+    }
+
     else
     {
-        if (value > 512)
-        {
-            state.directionForward = true;
-            state.throttle = map(value, 512 + DEAD_ZONE, 1023, 0, 255);
-        }
-        else
-        {
-            state.directionForward = false;
-            state.throttle = map(value, 0, 512 - DEAD_ZONE, 255, 0);
-        }
+        // Marche arrière
+
+        state.directionForward =
+            false;
+
+
+        state.throttle =
+            map(value,
+                0,
+                512 - DEAD_ZONE,
+                255,
+                0);
     }
 
-    //-------------------------------------------------
-    // Arrêt d'urgence
-    //-------------------------------------------------
 
-    state.emergencyStop = !digitalRead(PIN_ESTOP);
+    //==================================================
+    // 3. E-STOP
+    //==================================================
 
-    //-------------------------------------------------
-    // Feux
-    //-------------------------------------------------
+    static bool lastEstopButton =
+        HIGH;
 
-    static bool previousLight = HIGH;
 
-    bool current = digitalRead(PIN_LIGHT);
+    bool currentEstopButton =
+        digitalRead(PIN_ESTOP);
 
-    if ((previousLight == HIGH) && (current == LOW))
+
+    if (lastEstopButton == HIGH &&
+        currentEstopButton == LOW)
     {
-        state.light = !state.light;
+        state.emergencyStop =
+            !state.emergencyStop;
     }
 
-    previousLight = current;
 
-    //-------------------------------------------------
-    // Sélecteur loco
-    //-------------------------------------------------
+    lastEstopButton =
+        currentEstopButton;
 
-    int selector = analogRead(PIN_SELECTOR);
 
-    // Valeur provisoire
-    // Sera remplacée par ton tableau de correspondance
+    //==================================================
+    // 4. LIGHT
+    //==================================================
 
-    state.loco = 1;
+    static bool lastLightButton =
+        HIGH;
+
+
+    bool currentLightButton =
+        digitalRead(PIN_LIGHT);
+
+
+    if (lastLightButton == HIGH &&
+        currentLightButton == LOW)
+    {
+        state.light =
+            !state.light;
+    }
+
+
+    lastLightButton =
+        currentLightButton;
+
+
+    //==================================================
+    // 5. BATTERIE
+    //==================================================
+
+    int batteryADC =
+        analogRead(PIN_BATTERY);
+
+
+    // Tension réellement présente sur A2
+
+    float batteryPinVoltage =
+        batteryADC *
+        (5.0 / 1023.0);
+
+
+    // Reconstitution de la tension batterie
+    // avec le pont diviseur :
+    //
+    // Batterie ---- R1 ---- A2 ---- R2 ---- GND
+    //
+    // R1 = 4700 ohms
+    // R2 = 6800 ohms
+
+    state.batteryVoltage =
+        batteryPinVoltage *
+        (BATTERY_R1 + BATTERY_R2) /
+        BATTERY_R2;
 }

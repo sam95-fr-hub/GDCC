@@ -1,39 +1,43 @@
 /******************************************************************************
  *
  * GDCC
- * Battery.cpp
+ * Mesure de la batterie
  *
  ******************************************************************************/
 
 #include "Battery.h"
 #include "Config.h"
 
-#define BATTERY_SAMPLES 16
+//======================================================
+// Initialisation
+//======================================================
 
 void Battery_Init()
 {
     pinMode(PIN_BATTERY, INPUT);
 }
 
+//======================================================
+// Lecture de la tension batterie
+//======================================================
+
 float Battery_ReadVoltage()
 {
     long total = 0;
 
-    // Moyenne de plusieurs mesures pour réduire le bruit
-    for (uint8_t i = 0; i < BATTERY_SAMPLES; i++)
+    // Moyenne de 16 mesures
+    for (int i = 0; i < 16; i++)
     {
         total += analogRead(PIN_BATTERY);
-        delayMicroseconds(200);
     }
 
-    float adc = total / (float)BATTERY_SAMPLES;
+    float sensorValue = total / 16.0;
 
-    // Référence ADC (UNO)
-    float voltage = adc * (5.0 / 1023.0);
+    // Conversion ADC vers tension Arduino
+    float voltage = sensorValue * (5.0 / 1023.0);
 
     // Correction du pont diviseur
     voltage *= (BATTERY_R1 + BATTERY_R2) / BATTERY_R2;
 
     return voltage;
-}
 }
