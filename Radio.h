@@ -1,7 +1,9 @@
 /******************************************************************************
  *
  * GDCC
- * Gestion de la communication radio NRF24L01
+ * Communication radio NRF24L01
+ *
+ * Compatible avec les récepteurs V2.x
  *
  ******************************************************************************/
 
@@ -11,19 +13,29 @@
 #include <Arduino.h>
 #include "Types.h"
 
+
 //======================================================
 // Initialisation du module radio
 //======================================================
 
-bool Radio_Init();
+void Radio_Init();
+
 
 //======================================================
-// Envoi d'un paquet
+// Envoi du paquet de commande
+//======================================================
+//
+// Le format RadioPacket reste compatible V2.x
+//
+// - POT_Value
+// - ARU
+// - LIGHT_Value
+//
 //======================================================
 
-bool Radio_Send(
-    uint8_t destinationId,
-    const RadioPacket &packet
+void Radio_Send(
+    const HandsetState &state
 );
+
 
 #endif

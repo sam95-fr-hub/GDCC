@@ -20,16 +20,7 @@ void Display_Init();
 
 
 //======================================================
-// Mise à jour de l'affichage principal
-//
-// Affiche uniquement :
-// - Radio ID locomotive
-// - Throttle
-// - Direction
-// - LIGHT
-// - ARU
-//
-// Les noms de locomotives sont supprimés.
+// Affichage principal
 //======================================================
 
 void Display_Update(

@@ -2,21 +2,23 @@
  *
  * GDCC
  * Gestion de l'affichage OLED
+ * Version U8X8 - faible consommation SRAM
  *
  ******************************************************************************/
 
 #include "Display.h"
 
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SH1106.h>
+#include <U8x8lib.h>
 
 
 //======================================================
-// Objet OLED
+// Objet OLED SH1106
 //======================================================
 
-Adafruit_SH1106 display(-1);
+U8X8_SH1106_128X64_NONAME_HW_I2C display(
+    U8X8_PIN_NONE
+);
 
 
 //======================================================
@@ -25,38 +27,40 @@ Adafruit_SH1106 display(-1);
 
 void Display_Init()
 {
-    display.begin(
-        SH1106_SWITCHCAPVCC,
-        0x3C
+    display.setI2CAddress(0x3C * 2);
+
+    display.begin();
+
+    display.setFlipMode(1);
+
+    display.setFont(
+        u8x8_font_chroma48medium8_r
     );
 
-    display.setRotation(2);
+    display.clear();
 
-    display.clearDisplay();
-
-    display.setTextColor(WHITE);
 
     //==================================================
-    // Ecran de démarrage
+    // Écran de démarrage
     //==================================================
 
-    display.setTextSize(2);
+    display.drawString(
+        0,
+        0,
+        "GDCC"
+    );
 
-    display.setCursor(0, 0);
+    display.drawString(
+        0,
+        2,
+        "OLED OK"
+    );
 
-    display.print(F("GDCC"));
-
-    display.setTextSize(1);
-
-    display.setCursor(0, 25);
-
-    display.print(F("HANDSET V3"));
-
-    display.setCursor(0, 40);
-
-    display.print(F("DISPLAY OK"));
-
-    display.display();
+    display.drawString(
+        0,
+        4,
+        "SYSTEM READY"
+    );
 }
 
 
@@ -69,52 +73,75 @@ void Display_Update(
     int potValue
 )
 {
-    display.clearDisplay();
+    display.clear();
 
 
     //==================================================
-    // RADIO ID
+    // ID locomotive
     //==================================================
 
-    display.setTextSize(2);
+    display.drawString(
+        0,
+        0,
+        "LOCO ID:"
+    );
 
-    display.setCursor(0, 0);
+    display.setCursor(
+        9,
+        0
+    );
 
-    display.print(F("LOCO "));
-
-    display.print(state.loco);
-
-
-    //==================================================
-    // THROTTLE
-    //==================================================
-
-    display.setTextSize(1);
-
-    display.setCursor(0, 22);
-
-    display.print(F("Throttle: "));
-
-    display.print(potValue);
+    display.print(
+        state.loco
+    );
 
 
     //==================================================
-    // DIRECTION
+    // Throttle
     //==================================================
 
-    display.setCursor(0, 34);
+    display.drawString(
+        0,
+        2,
+        "THROTTLE:"
+    );
+
+    display.setCursor(
+        10,
+        2
+    );
+
+    display.print(
+        potValue
+    );
+
+
+    //==================================================
+    // Direction
+    //==================================================
+
+    display.setCursor(
+        0,
+        4
+    );
 
     if (state.throttle == 0)
     {
-        display.print(F("STOP"));
+        display.print(
+            "STOP"
+        );
     }
     else if (state.directionForward)
     {
-        display.print(F("FORWARD"));
+        display.print(
+            "FORWARD"
+        );
     }
     else
     {
-        display.print(F("REVERSE"));
+        display.print(
+            "REVERSE"
+        );
     }
 
 
@@ -122,41 +149,52 @@ void Display_Update(
     // LIGHT
     //==================================================
 
-    display.setCursor(0, 46);
+    display.setCursor(
+        0,
+        5
+    );
 
-    display.print(F("LIGHT: "));
+    display.print(
+        "LIGHT:"
+    );
 
     if (state.light)
     {
-        display.print(F("ON"));
+        display.print(
+            "ON"
+        );
     }
     else
     {
-        display.print(F("OFF"));
+        display.print(
+            "OFF"
+        );
     }
 
 
     //==================================================
-    // ARRET D'URGENCE
+    // ARU
     //==================================================
 
-    display.setCursor(0, 58);
+    display.setCursor(
+        0,
+        6
+    );
 
-    display.print(F("ARU: "));
+    display.print(
+        "ARU:"
+    );
 
     if (state.emergencyStop)
     {
-        display.print(F("STOP"));
+        display.print(
+            "STOP"
+        );
     }
     else
     {
-        display.print(F("OK"));
+        display.print(
+            "OK"
+        );
     }
-
-
-    //==================================================
-    // Mise à jour OLED
-    //==================================================
-
-    display.display();
 }

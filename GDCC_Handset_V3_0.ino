@@ -1,20 +1,7 @@
 /******************************************************************************
  *
  * GDCC Handset V3.0
- * Télécommande compatible avec les récepteurs V2.x
- *
- * Fonctionnalités :
- * - Sélecteur 12 positions
- * - Sélection par Radio ID
- * - Throttle
- * - Marche avant / arrière
- * - LIGHT
- * - ARU
- * - OLED
- *
- * Temporairement supprimé :
- * - Lecture batterie
- * - Noms des locomotives
+ * OLED + INPUTS + RADIO
  *
  ******************************************************************************/
 
@@ -25,6 +12,7 @@
 #include "Inputs.h"
 #include "Locomotives.h"
 #include "Display.h"
+#include "Radio.h"
 
 
 //======================================================
@@ -47,6 +35,7 @@ void setup()
     Serial.println();
     Serial.println("==============================");
     Serial.println("GDCC HANDSET V3.0");
+    Serial.println("OLED + INPUTS + RADIO");
     Serial.println("==============================");
 
 
@@ -69,19 +58,30 @@ void setup()
 
 
     //==================================================
+    // Initialisation radio
+    //==================================================
+
+    Radio_Init();
+
+
+    //==================================================
     // Etat initial
     //==================================================
 
     handset.loco =
         Locomotives_GetRadioId(0);
 
-    handset.throttle = 0;
+    handset.throttle =
+        0;
 
-    handset.directionForward = true;
+    handset.directionForward =
+        true;
 
-    handset.light = false;
+    handset.light =
+        false;
 
-    handset.emergencyStop = false;
+    handset.emergencyStop =
+        false;
 
 
     Serial.println("SYSTEME PRET");
@@ -100,7 +100,9 @@ void loop()
     // 1. Lecture des entrées
     //==================================================
 
-    Inputs_Update(handset);
+    Inputs_Update(
+        handset
+    );
 
 
     //==================================================
@@ -108,11 +110,13 @@ void loop()
     //==================================================
 
     int potValue =
-        analogRead(PIN_THROTTLE);
+        analogRead(
+            PIN_THROTTLE
+        );
 
 
     //==================================================
-    // 3. Mise à jour OLED
+    // 3. Affichage OLED
     //==================================================
 
     Display_Update(
@@ -122,59 +126,102 @@ void loop()
 
 
     //==================================================
-    // 4. Moniteur série
+    // 4. Envoi radio
     //==================================================
 
-    Serial.print("LOCO ID : ");
-
-    Serial.print(handset.loco);
-
-
-    Serial.print(" | THROTTLE : ");
-
-    Serial.print(potValue);
+    Radio_Send(
+        handset
+    );
 
 
-    Serial.print(" | DIRECTION : ");
+    //==================================================
+    // 5. Moniteur série
+    //==================================================
+
+    Serial.print(
+        "LOCO ID : "
+    );
+
+    Serial.print(
+        handset.loco
+    );
+
+    Serial.print(
+        " | THROTTLE : "
+    );
+
+    Serial.print(
+        potValue
+    );
+
+    Serial.print(
+        " | DIRECTION : "
+    );
 
 
-    if (handset.throttle == 0)
+    if (
+        handset.throttle == 0
+    )
     {
-        Serial.print("STOP");
+        Serial.print(
+            "STOP"
+        );
     }
-    else if (handset.directionForward)
+    else if (
+        handset.directionForward
+    )
     {
-        Serial.print("AVANT");
+        Serial.print(
+            "AVANT"
+        );
     }
     else
     {
-        Serial.print("ARRIERE");
+        Serial.print(
+            "ARRIERE"
+        );
     }
 
 
-    Serial.print(" | LIGHT : ");
+    Serial.print(
+        " | LIGHT : "
+    );
 
 
-    if (handset.light)
+    if (
+        handset.light
+    )
     {
-        Serial.print("ON");
-    }
-    else
-    {
-        Serial.print("OFF");
-    }
-
-
-    Serial.print(" | ARU : ");
-
-
-    if (handset.emergencyStop)
-    {
-        Serial.println("ACTIF");
+        Serial.print(
+            "ON"
+        );
     }
     else
     {
-        Serial.println("INACTIF");
+        Serial.print(
+            "OFF"
+        );
+    }
+
+
+    Serial.print(
+        " | ARU : "
+    );
+
+
+    if (
+        handset.emergencyStop
+    )
+    {
+        Serial.println(
+            "ACTIF"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "INACTIF"
+        );
     }
 
 
@@ -182,5 +229,5 @@ void loop()
     // Rafraîchissement
     //==================================================
 
-    delay(500);
+    delay(100);
 }

@@ -1,40 +1,148 @@
 /******************************************************************************
  *
  * GDCC
- * Gestion de la communication radio NRF24L01
+ * Communication radio NRF24L01
+ *
+ * Compatible avec les récepteurs V2.x
  *
  ******************************************************************************/
 
 #include "Radio.h"
 #include "Config.h"
-#include <NRFLite.h>
 
-static NRFLite radio;
+#include <SPI.h>
+#include <RF24.h>
+
 
 //======================================================
-// Initialisation
+// Objet NRF24L01
 //======================================================
 
-bool Radio_Init()
+RF24 radio(
+    PIN_NRF_CE,
+    PIN_NRF_CSN
+);
+
+
+//======================================================
+// Adresse radio
+//
+// Le récepteur V2.x doit utiliser la même adresse
+// que celle définie dans son programme.
+//
+// Adresse conservée pour compatibilité.
+//======================================================
+
+const byte RADIO_ADDRESS[6] = "GDCC";
+
+
+//======================================================
+// Initialisation radio
+//======================================================
+
+void Radio_Init()
 {
-    if (!radio.init(RADIO_ID, PIN_NRF_CE, PIN_NRF_CSN))
+    if (!radio.begin())
     {
-        return false;
+        Serial.println("ERREUR NRF24L01");
+        return;
     }
 
-    return true;
+
+    // Canal radio
+    radio.setChannel(
+        RADIO_CHANNEL
+    );
+
+
+    // Puissance d'émission
+    radio.setPALevel(
+        RF24_PA_LOW
+    );
+
+
+    // Débit
+    radio.setDataRate(
+        RF24_250KBPS
+    );
+
+
+    // Adresse du récepteur
+    radio.openWritingPipe(
+        RADIO_ADDRESS
+    );
+
+
+    // Pas d'accusé de réception
+    // pour conserver le comportement
+    // simple du système V2.x
+
+    radio.setAutoAck(
+        false
+    );
+
+
+    // Mode émission
+    radio.stopListening();
+
+
+    Serial.println("NRF24L01 OK");
 }
 
 
 //======================================================
-// Envoi des données
+// Envoi du paquet radio
 //======================================================
 
-bool Radio_Send(uint8_t destinationId, const RadioPacket &packet)
+void Radio_Send(
+    const HandsetState &state
+)
 {
-    return radio.send(
-        destinationId,
-        (void*)&packet,
+    RadioPacket packet;
+
+
+    //==================================================
+    // THROTTLE
+    //==================================================
+
+    packet.POT_Value =
+        state.throttle;
+
+
+    //==================================================
+    // ARU
+    //==================================================
+
+    if (state.emergencyStop)
+    {
+        packet.ARU = 1;
+    }
+    else
+    {
+        packet.ARU = 0;
+    }
+
+
+    //==================================================
+    // LIGHT
+    //==================================================
+
+    if (state.light)
+    {
+        packet.LIGHT_Value = 1;
+    }
+    else
+    {
+        packet.LIGHT_Value = 0;
+    }
+
+
+    //==================================================
+    // Envoi
+    //==================================================
+
+    radio.write(
+        &packet,
         sizeof(packet)
     );
 }
