@@ -2,7 +2,6 @@
  *
  * GDCC
  * Gestion de l'affichage OLED
- * Version U8X8 - faible consommation SRAM
  *
  ******************************************************************************/
 
@@ -13,7 +12,7 @@
 
 
 //======================================================
-// Objet OLED SH1106
+// Objet OLED
 //======================================================
 
 U8X8_SH1106_128X64_NONAME_HW_I2C display(
@@ -22,14 +21,26 @@ U8X8_SH1106_128X64_NONAME_HW_I2C display(
 
 
 //======================================================
+// Valeurs précédentes
+//======================================================
+
+static uint8_t lastLoco = 255;
+static int lastPot = -1;
+static uint16_t lastThrottle = 65535;
+static bool lastDirection = false;
+static bool lastLight = false;
+static bool lastARU = false;
+
+
+//======================================================
 // Initialisation OLED
 //======================================================
 
 void Display_Init()
 {
-    display.setI2CAddress(0x3C * 2);
-
     display.begin();
+
+    display.setPowerSave(0);
 
     display.setFlipMode(1);
 
@@ -37,30 +48,60 @@ void Display_Init()
         u8x8_font_chroma48medium8_r
     );
 
-    display.clear();
+    display.clearDisplay();
 
 
     //==================================================
-    // Écran de démarrage
+    // Ecran de démarrage
     //==================================================
 
-    display.drawString(
-        0,
-        0,
-        "GDCC"
-    );
+    display.setCursor(1, 0);
+    display.print(F("GDCC HANDSET"));
 
-    display.drawString(
-        0,
-        2,
-        "OLED OK"
-    );
+    display.setCursor(1, 2);
+    display.print(F("OLED OK"));
 
-    display.drawString(
-        0,
-        4,
-        "SYSTEM READY"
-    );
+    display.setCursor(1, 4);
+    display.print(F("INITIALISATION"));
+
+    delay(1000);
+
+    display.clearDisplay();
+
+
+    //==================================================
+    // Affichage initial complet
+    //==================================================
+
+    display.setCursor(1, 0);
+    display.print(F("LOCO ID: 0"));
+
+    display.setCursor(1, 2);
+    display.print(F("POT: 0"));
+
+    display.setCursor(1, 3);
+    display.print(F("SPEED: 0"));
+
+    display.setCursor(1, 4);
+    display.print(F("STOP"));
+
+    display.setCursor(1, 5);
+    display.print(F("LIGHT: OFF"));
+
+    display.setCursor(1, 6);
+    display.print(F("ARU: OK"));
+
+
+    //==================================================
+    // Forcer la mise à jour des valeurs
+    //==================================================
+
+    lastLoco = 255;
+    lastPot = -1;
+    lastThrottle = 65535;
+    lastDirection = false;
+    lastLight = false;
+    lastARU = false;
 }
 
 
@@ -73,75 +114,50 @@ void Display_Update(
     int potValue
 )
 {
-    display.clear();
+    bool displayChanged = false;
 
 
     //==================================================
-    // ID locomotive
+    // LOCO
     //==================================================
 
-    display.drawString(
-        0,
-        0,
-        "LOCO ID:"
-    );
-
-    display.setCursor(
-        9,
-        0
-    );
-
-    display.print(
-        state.loco
-    );
-
-
-    //==================================================
-    // Throttle
-    //==================================================
-
-    display.drawString(
-        0,
-        2,
-        "THROTTLE:"
-    );
-
-    display.setCursor(
-        10,
-        2
-    );
-
-    display.print(
-        potValue
-    );
-
-
-    //==================================================
-    // Direction
-    //==================================================
-
-    display.setCursor(
-        0,
-        4
-    );
-
-    if (state.throttle == 0)
+    if (state.loco != lastLoco)
     {
-        display.print(
-            "STOP"
-        );
+        lastLoco = state.loco;
+        displayChanged = true;
     }
-    else if (state.directionForward)
+
+
+    //==================================================
+    // POTENTIOMETRE
+    //==================================================
+
+    if (potValue != lastPot)
     {
-        display.print(
-            "FORWARD"
-        );
+        lastPot = potValue;
+        displayChanged = true;
     }
-    else
+
+
+    //==================================================
+    // VITESSE
+    //==================================================
+
+    if (state.throttle != lastThrottle)
     {
-        display.print(
-            "REVERSE"
-        );
+        lastThrottle = state.throttle;
+        displayChanged = true;
+    }
+
+
+    //==================================================
+    // DIRECTION
+    //==================================================
+
+    if (state.directionForward != lastDirection)
+    {
+        lastDirection = state.directionForward;
+        displayChanged = true;
     }
 
 
@@ -149,26 +165,10 @@ void Display_Update(
     // LIGHT
     //==================================================
 
-    display.setCursor(
-        0,
-        5
-    );
-
-    display.print(
-        "LIGHT:"
-    );
-
-    if (state.light)
+    if (state.light != lastLight)
     {
-        display.print(
-            "ON"
-        );
-    }
-    else
-    {
-        display.print(
-            "OFF"
-        );
+        lastLight = state.light;
+        displayChanged = true;
     }
 
 
@@ -176,25 +176,114 @@ void Display_Update(
     // ARU
     //==================================================
 
-    display.setCursor(
-        0,
-        6
-    );
-
-    display.print(
-        "ARU:"
-    );
-
-    if (state.emergencyStop)
+    if (state.emergencyStop != lastARU)
     {
-        display.print(
-            "STOP"
-        );
+        lastARU = state.emergencyStop;
+        displayChanged = true;
+    }
+
+
+    //==================================================
+    // Rafraîchissement uniquement si nécessaire
+    //==================================================
+
+    if (!displayChanged)
+    {
+        return;
+    }
+
+
+    //==================================================
+    // LOCO
+    //==================================================
+
+    display.setCursor(1, 0);
+
+    display.print(F("LOCO ID:     "));
+
+    display.print(state.loco);
+
+    display.print(F("    "));
+
+
+    //==================================================
+    // POT
+    //==================================================
+
+    display.setCursor(1, 2);
+
+    display.print(F("POT: "));
+
+    display.print(potValue);
+
+    display.print(F("    "));
+
+
+    //==================================================
+    // SPEED
+    //==================================================
+
+    display.setCursor(1, 3);
+
+    display.print(F("SPEED: "));
+
+    display.print(state.throttle);
+
+    display.print(F("    "));
+
+
+    //==================================================
+    // DIRECTION
+    //==================================================
+
+    display.setCursor(1, 4);
+
+    if (state.throttle == 0)
+    {
+        display.print(F("STOP         "));
+    }
+    else if (state.directionForward)
+    {
+        display.print(F("FORWARD      "));
     }
     else
     {
-        display.print(
-            "OK"
-        );
+        display.print(F("REVERSE      "));
+    }
+
+
+    //==================================================
+    // LIGHT
+    //==================================================
+
+    display.setCursor(1, 5);
+
+    display.print(F("LIGHT: "));
+
+    if (state.light)
+    {
+        display.print(F("ON       "));
+    }
+    else
+    {
+        display.print(F("OFF      "));
+    }
+
+
+    //==================================================
+    // ARU
+    //==================================================
+
+    display.setCursor(1, 6);
+
+    display.print(F("ARU: "));
+
+    if (state.emergencyStop)
+    {
+        display.print(F("ACTIVE   "));
+    }
+    else
+    {
+        display.print(F("OK       "));
     }
 }

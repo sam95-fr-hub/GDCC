@@ -16,16 +16,12 @@
 
 void Inputs_Init()
 {
-    // Sélecteur locomotive
     pinMode(PIN_SELECTOR, INPUT);
 
-    // Potentiomètre throttle
     pinMode(PIN_THROTTLE, INPUT);
 
-    // Arrêt d'urgence
     pinMode(PIN_ESTOP, INPUT_PULLUP);
 
-    // Éclairage
     pinMode(PIN_LIGHT, INPUT_PULLUP);
 }
 
@@ -34,7 +30,9 @@ void Inputs_Init()
 // Mise à jour de l'état
 //======================================================
 
-void Inputs_Update(HandsetState &state)
+void Inputs_Update(
+    HandsetState &state
+)
 {
     //==================================================
     // 1. SELECTEUR DE LOCOMOTIVE
@@ -44,21 +42,15 @@ void Inputs_Update(HandsetState &state)
         analogRead(PIN_SELECTOR);
 
 
-    // Conversion ADC -> tension en volts
+    uint16_t selectorMillivolts =
+        ((uint32_t)selectorADC * 5000UL) / 1023UL;
 
-    float selectorVoltage =
-        (selectorADC * 5.0) / 1023.0;
-
-
-    // Recherche de la locomotive la plus proche
 
     uint8_t locoIndex =
         Locomotives_GetIndex(
-            selectorVoltage
+            selectorMillivolts / 1000.0
         );
 
-
-    // Récupération du Radio ID
 
     state.loco =
         Locomotives_GetRadioId(
@@ -72,6 +64,12 @@ void Inputs_Update(HandsetState &state)
 
     int value =
         analogRead(PIN_THROTTLE);
+
+
+    // Valeur brute conservée pour compatibilité V2.x
+
+    state.potValue =
+        value;
 
 
     // Zone morte centrale
@@ -120,7 +118,9 @@ void Inputs_Update(HandsetState &state)
     // 3. E-STOP
     //==================================================
 
-    static bool lastEstopButton = HIGH;
+    static bool lastEstopButton =
+        HIGH;
+
 
     bool currentEstopButton =
         digitalRead(PIN_ESTOP);
@@ -138,24 +138,37 @@ void Inputs_Update(HandsetState &state)
         currentEstopButton;
 
 
-    //==================================================
-    // 4. LIGHT
-    //==================================================
+//======================================================
+// 4. LIGHT
+//======================================================
 
-    static bool lastLightButton = HIGH;
+static bool lastLightButton = HIGH;
 
-    bool currentLightButton =
-        digitalRead(PIN_LIGHT);
+bool currentLightButton =
+    digitalRead(PIN_LIGHT);
 
 
-    if (lastLightButton == HIGH &&
-        currentLightButton == LOW)
+// Détection d'un appui
+// Bouton relié à la masse
+if (lastLightButton == HIGH &&
+    currentLightButton == LOW)
+{
+    state.light =
+        !state.light;
+
+    Serial.print(F("LIGHT CHANGE : "));
+
+    if (state.light)
     {
-        state.light =
-            !state.light;
+        Serial.println(F("ON"));
     }
+    else
+    {
+        Serial.println(F("OFF"));
+    }
+}
 
 
-    lastLightButton =
-        currentLightButton;
+lastLightButton =
+    currentLightButton;
 }

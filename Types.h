@@ -19,6 +19,11 @@ struct HandsetState
 {
     uint8_t loco;
 
+    // Valeur brute du potentiomètre
+    // Compatible avec le fonctionnement V2.x
+    int potValue;
+
+    // Vitesse calculée
     uint16_t throttle;
 
     bool directionForward;
@@ -31,10 +36,6 @@ struct HandsetState
 
 //======================================================
 // Paquet radio compatible V2.x
-//
-// IMPORTANT :
-// Cette structure reste strictement compatible
-// avec les récepteurs des locomotives V2.x
 //======================================================
 
 struct RadioPacket

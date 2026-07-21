@@ -3,7 +3,7 @@
  * GDCC
  * Communication radio NRF24L01
  *
- * Compatible avec les récepteurs V2.x
+ * Compatible avec les récepteurs V2.x utilisant NRFLite
  *
  ******************************************************************************/
 
@@ -11,29 +11,14 @@
 #include "Config.h"
 
 #include <SPI.h>
-#include <RF24.h>
+#include <NRFLite.h>
 
 
 //======================================================
-// Objet NRF24L01
+// Objet radio
 //======================================================
 
-RF24 radio(
-    PIN_NRF_CE,
-    PIN_NRF_CSN
-);
-
-
-//======================================================
-// Adresse radio
-//
-// Le récepteur V2.x doit utiliser la même adresse
-// que celle définie dans son programme.
-//
-// Adresse conservée pour compatibilité.
-//======================================================
-
-const byte RADIO_ADDRESS[6] = "GDCC";
+NRFLite radio;
 
 
 //======================================================
@@ -42,51 +27,10 @@ const byte RADIO_ADDRESS[6] = "GDCC";
 
 void Radio_Init()
 {
-    if (!radio.begin())
-    {
-        Serial.println("ERREUR NRF24L01");
-        return;
-    }
+    // La radio sera initialisée dans Radio_Send()
+    // car le RADIO_ID dépend de la locomotive sélectionnée.
 
-
-    // Canal radio
-    radio.setChannel(
-        RADIO_CHANNEL
-    );
-
-
-    // Puissance d'émission
-    radio.setPALevel(
-        RF24_PA_LOW
-    );
-
-
-    // Débit
-    radio.setDataRate(
-        RF24_250KBPS
-    );
-
-
-    // Adresse du récepteur
-    radio.openWritingPipe(
-        RADIO_ADDRESS
-    );
-
-
-    // Pas d'accusé de réception
-    // pour conserver le comportement
-    // simple du système V2.x
-
-    radio.setAutoAck(
-        false
-    );
-
-
-    // Mode émission
-    radio.stopListening();
-
-
-    Serial.println("NRF24L01 OK");
+    Serial.println(F("RADIO NRFLite PRETE"));
 }
 
 
@@ -98,20 +42,47 @@ void Radio_Send(
     const HandsetState &state
 )
 {
+    static uint8_t lastRadioId = 0;
+
+
+    //==================================================
+    // Initialisation / changement de locomotive
+    //==================================================
+
+    if (state.loco != lastRadioId)
+    {
+        if (!radio.init(
+                state.loco,
+                PIN_NRF_CE,
+                PIN_NRF_CSN))
+        {
+            Serial.println(F("ERREUR NRF24L01"));
+            return;
+        }
+
+        lastRadioId =
+            state.loco;
+
+        Serial.print(F("RADIO LOCO ID : "));
+        Serial.println(state.loco);
+    }
+
+
+    //==================================================
+    // Création du paquet
+    //==================================================
+
     RadioPacket packet;
 
 
-    //==================================================
-    // THROTTLE
-    //==================================================
+    // Valeur brute du potentiomètre
+    // Compatible avec le récepteur V2.x
 
     packet.POT_Value =
-        state.throttle;
+        state.potValue;
 
 
-    //==================================================
     // ARU
-    //==================================================
 
     if (state.emergencyStop)
     {
@@ -123,9 +94,7 @@ void Radio_Send(
     }
 
 
-    //==================================================
     // LIGHT
-    //==================================================
 
     if (state.light)
     {
@@ -141,7 +110,8 @@ void Radio_Send(
     // Envoi
     //==================================================
 
-    radio.write(
+    radio.send(
+        state.loco,
         &packet,
         sizeof(packet)
     );

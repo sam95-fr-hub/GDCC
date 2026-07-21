@@ -1,7 +1,8 @@
 /******************************************************************************
  *
  * GDCC Handset V3.0
- * OLED + INPUTS + RADIO
+ *
+ * Télécommande compatible avec les récepteurs V2.x
  *
  ******************************************************************************/
 
@@ -10,7 +11,6 @@
 #include "Config.h"
 #include "Types.h"
 #include "Inputs.h"
-#include "Locomotives.h"
 #include "Display.h"
 #include "Radio.h"
 
@@ -33,10 +33,9 @@ void setup()
     delay(500);
 
     Serial.println();
-    Serial.println("==============================");
-    Serial.println("GDCC HANDSET V3.0");
-    Serial.println("OLED + INPUTS + RADIO");
-    Serial.println("==============================");
+    Serial.println(F("=============================="));
+    Serial.println(F("GDCC HANDSET V3.0"));
+    Serial.println(F("=============================="));
 
 
     //==================================================
@@ -45,7 +44,7 @@ void setup()
 
     Inputs_Init();
 
-    Serial.println("INPUTS OK");
+    Serial.println(F("INPUTS OK"));
 
 
     //==================================================
@@ -54,7 +53,7 @@ void setup()
 
     Display_Init();
 
-    Serial.println("OLED OK");
+    Serial.println(F("OLED OK"));
 
 
     //==================================================
@@ -68,23 +67,18 @@ void setup()
     // Etat initial
     //==================================================
 
-    handset.loco =
-        Locomotives_GetRadioId(0);
+    handset.loco = 0;
 
-    handset.throttle =
-        0;
+    handset.throttle = 0;
 
-    handset.directionForward =
-        true;
+    handset.directionForward = true;
 
-    handset.light =
-        false;
+    handset.light = false;
 
-    handset.emergencyStop =
-        false;
+    handset.emergencyStop = false;
 
 
-    Serial.println("SYSTEME PRET");
+    Serial.println(F("SYSTEME PRET"));
 
     delay(1000);
 }
@@ -100,33 +94,21 @@ void loop()
     // 1. Lecture des entrées
     //==================================================
 
-    Inputs_Update(
-        handset
-    );
+    Inputs_Update(handset);
 
 
     //==================================================
-    // 2. Lecture brute du throttle
+    // 2. Mise à jour OLED
     //==================================================
 
-    int potValue =
-        analogRead(
-            PIN_THROTTLE
-        );
-
-
-    //==================================================
-    // 3. Affichage OLED
-    //==================================================
-
-    Display_Update(
-        handset,
-        potValue
-    );
+Display_Update(
+    handset,
+    analogRead(PIN_THROTTLE)
+);
 
 
     //==================================================
-    // 4. Envoi radio
+    // 3. Envoi radio
     //==================================================
 
     Radio_Send(
@@ -135,93 +117,52 @@ void loop()
 
 
     //==================================================
-    // 5. Moniteur série
+    // 4. Moniteur série
     //==================================================
 
-    Serial.print(
-        "LOCO ID : "
-    );
+    Serial.print(F("LOCO ID : "));
+    Serial.print(handset.loco);
 
-    Serial.print(
-        handset.loco
-    );
+    Serial.print(F(" | THROTTLE : "));
+    Serial.print(handset.throttle);
 
-    Serial.print(
-        " | THROTTLE : "
-    );
+    Serial.print(F(" | DIRECTION : "));
 
-    Serial.print(
-        potValue
-    );
-
-    Serial.print(
-        " | DIRECTION : "
-    );
-
-
-    if (
-        handset.throttle == 0
-    )
+    if (handset.throttle == 0)
     {
-        Serial.print(
-            "STOP"
-        );
+        Serial.print(F("STOP"));
     }
-    else if (
-        handset.directionForward
-    )
+    else if (handset.directionForward)
     {
-        Serial.print(
-            "AVANT"
-        );
+        Serial.print(F("AVANT"));
     }
     else
     {
-        Serial.print(
-            "ARRIERE"
-        );
+        Serial.print(F("ARRIERE"));
     }
 
 
-    Serial.print(
-        " | LIGHT : "
-    );
+    Serial.print(F(" | LIGHT : "));
 
-
-    if (
-        handset.light
-    )
+    if (handset.light)
     {
-        Serial.print(
-            "ON"
-        );
+        Serial.print(F("ON"));
     }
     else
     {
-        Serial.print(
-            "OFF"
-        );
+        Serial.print(F("OFF"));
     }
 
 
-    Serial.print(
-        " | ARU : "
-    );
+    Serial.print(F(" | ARU : "));
 
-
-    if (
-        handset.emergencyStop
-    )
+    if (handset.emergencyStop)
     {
-        Serial.println(
-            "ACTIF"
-        );
+        Serial.println(F("ACTIF"));
     }
     else
     {
-        Serial.println(
-            "INACTIF"
-        );
+        Serial.println(F("INACTIF"));
     }
 
 
