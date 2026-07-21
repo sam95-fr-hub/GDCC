@@ -10,6 +10,7 @@
 
 #include "Display.h"
 #include "Locomotives.h"
+#include "logo.h"
 
 #include <Wire.h>
 #include <U8g2lib.h>
@@ -54,7 +55,32 @@ void Display_Init()
 
 
     //==================================================
-    // Ecran de démarrage
+    // ECRAN 1 : LOGO
+    //==================================================
+
+    display.firstPage();
+
+    do
+    {
+        display.drawXBMP(
+            32,
+            0,
+            64,
+            64,
+            logoBitmap
+        );
+
+    }
+    while (
+        display.nextPage()
+    );
+
+
+    delay(2000);
+
+
+    //==================================================
+    // ECRAN 2 : VERSION
     //==================================================
 
     display.firstPage();
@@ -101,7 +127,7 @@ void Display_Init()
     );
 
 
-    delay(1000);
+    delay(2000);
 
 
     //==================================================
