@@ -10,6 +10,7 @@
 
 #include "Display.h"
 #include "Locomotives.h"
+#include "Battery.h"
 #include "logo.h"
 
 #include <Wire.h>
@@ -39,6 +40,8 @@ static int lastPot = -1;
 static bool lastLight = false;
 
 static bool lastARU = false;
+
+static float lastBatteryVoltage = -1.0;
 
 
 //======================================================
@@ -141,6 +144,8 @@ void Display_Init()
     lastLight = false;
 
     lastARU = false;
+
+    lastBatteryVoltage = -1.0;
 }
 
 
@@ -154,6 +159,14 @@ void Display_Update(
 )
 {
     bool needUpdate = false;
+
+
+    //==================================================
+    // Lecture tension batterie
+    //==================================================
+
+    float batteryVoltage =
+        Battery_ReadVoltage();
 
 
     //==================================================
@@ -186,6 +199,22 @@ void Display_Update(
 
     if (
         state.emergencyStop != lastARU
+    )
+    {
+        needUpdate = true;
+    }
+
+
+    //==================================================
+    // Mise à jour affichage batterie
+    // Uniquement si variation >= 0.1V
+    //==================================================
+
+    if (
+        abs(
+            batteryVoltage -
+            lastBatteryVoltage
+        ) >= 0.1
     )
     {
         needUpdate = true;
@@ -502,6 +531,36 @@ void Display_Update(
                     F("[*]")
                 );
             }
+
+
+            //============================================
+            // TENSION BATTERIE
+            //============================================
+
+            char batteryText[8];
+
+            dtostrf(
+                batteryVoltage,
+                4,
+                1,
+                batteryText
+            );
+
+
+            display.setCursor(
+                88,
+                63
+            );
+
+
+            display.print(
+                batteryText
+            );
+
+
+            display.print(
+                F("V")
+            );
         }
 
     }
@@ -525,4 +584,7 @@ void Display_Update(
 
     lastARU =
         state.emergencyStop;
+
+    lastBatteryVoltage =
+        batteryVoltage;
 }
