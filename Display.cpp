@@ -134,6 +134,78 @@ void Display_Init()
 
 
     //==================================================
+    // ECRAN 3 : BATTERIE FAIBLE
+    //
+    // Affiché uniquement si batterie < 6.4V
+    //==================================================
+
+    float batteryVoltage =
+        Battery_ReadVoltage();
+
+
+    if (
+        batteryVoltage < 6.4
+    )
+    {
+        display.firstPage();
+
+        do
+        {
+            display.setFont(
+                u8g2_font_6x10_tf
+            );
+
+
+            display.setCursor(
+                34,
+                16
+            );
+
+            display.print(
+                F("BATTERIE")
+            );
+
+
+            display.setCursor(
+                34,
+                28
+            );
+
+            display.print(
+                F("FAIBLE")
+            );
+
+
+            display.setCursor(
+                30,
+                44
+            );
+
+            display.print(
+                F("CHARGER")
+            );
+
+
+            display.setCursor(
+                30,
+                56
+            );
+
+            display.print(
+                F("BATTERIE")
+            );
+
+        }
+        while (
+            display.nextPage()
+        );
+
+
+        delay(3000);
+    }
+
+
+    //==================================================
     // Forcer premier affichage
     //==================================================
 
@@ -538,6 +610,7 @@ void Display_Update(
             //============================================
 
             char batteryText[8];
+
 
             dtostrf(
                 batteryVoltage,
