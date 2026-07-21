@@ -8,23 +8,34 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include <Arduino.h>
 #include "Types.h"
 
+
 //======================================================
-// Initialisation
+// Initialisation OLED
 //======================================================
 
 void Display_Init();
 
 
 //======================================================
-// Affichage principal
+// Mise à jour de l'affichage principal
+//
+// Affiche uniquement :
+// - Radio ID locomotive
+// - Throttle
+// - Direction
+// - LIGHT
+// - ARU
+//
+// Les noms de locomotives sont supprimés.
 //======================================================
 
 void Display_Update(
     const HandsetState &state,
-    const char* locoName,
     int potValue
 );
+
 
 #endif

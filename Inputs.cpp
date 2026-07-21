@@ -27,18 +27,11 @@ void Inputs_Init()
 
     // Éclairage
     pinMode(PIN_LIGHT, INPUT_PULLUP);
-
-    // Batterie
-    pinMode(PIN_BATTERY, INPUT);
 }
 
 
 //======================================================
 // Mise à jour de l'état
-//
-// Lecture des commandes uniquement.
-//
-// La batterie n'est volontairement PAS lue ici.
 //======================================================
 
 void Inputs_Update(HandsetState &state)
@@ -51,20 +44,21 @@ void Inputs_Update(HandsetState &state)
         analogRead(PIN_SELECTOR);
 
 
-    // Conversion ADC -> millivolts
+    // Conversion ADC -> tension en volts
 
-    uint16_t selectorMillivolts =
-        ((uint32_t)selectorADC * 5000UL) / 1023UL;
+    float selectorVoltage =
+        (selectorADC * 5.0) / 1023.0;
 
 
-    // Conversion en tension pour la recherche
-    // de la locomotive
+    // Recherche de la locomotive la plus proche
 
     uint8_t locoIndex =
         Locomotives_GetIndex(
-            selectorMillivolts / 1000.0
+            selectorVoltage
         );
 
+
+    // Récupération du Radio ID
 
     state.loco =
         Locomotives_GetRadioId(
@@ -86,17 +80,14 @@ void Inputs_Update(HandsetState &state)
     {
         state.throttle = 0;
 
-        state.directionForward =
-            true;
+        state.directionForward = true;
     }
 
     else if (value > 512)
     {
         // Marche avant
 
-        state.directionForward =
-            true;
-
+        state.directionForward = true;
 
         state.throttle =
             map(
@@ -112,9 +103,7 @@ void Inputs_Update(HandsetState &state)
     {
         // Marche arrière
 
-        state.directionForward =
-            false;
-
+        state.directionForward = false;
 
         state.throttle =
             map(
@@ -131,9 +120,7 @@ void Inputs_Update(HandsetState &state)
     // 3. E-STOP
     //==================================================
 
-    static bool lastEstopButton =
-        HIGH;
-
+    static bool lastEstopButton = HIGH;
 
     bool currentEstopButton =
         digitalRead(PIN_ESTOP);
@@ -155,9 +142,7 @@ void Inputs_Update(HandsetState &state)
     // 4. LIGHT
     //==================================================
 
-    static bool lastLightButton =
-        HIGH;
-
+    static bool lastLightButton = HIGH;
 
     bool currentLightButton =
         digitalRead(PIN_LIGHT);
@@ -173,50 +158,4 @@ void Inputs_Update(HandsetState &state)
 
     lastLightButton =
         currentLightButton;
-}
-
-
-//======================================================
-// Lecture de la tension batterie
-//
-// Cette fonction est appelée uniquement au démarrage.
-//
-// Le pont diviseur est :
-//
-// R1 = 4700 ohms
-// R2 = 6800 ohms
-//
-// La tension réelle batterie est calculée à partir
-// de la tension mesurée sur l'entrée A2.
-//======================================================
-
-float Inputs_ReadBatteryVoltage()
-{
-    // Lecture ADC
-
-    int batteryADC =
-        analogRead(PIN_BATTERY);
-
-
-    // Conversion ADC -> tension mesurée sur A2
-
-    float voltageAtPin =
-        batteryADC *
-        (5.0 / 1023.0);
-
-
-    // Correction du pont diviseur
-    //
-    // Vbatterie =
-    // Vmesurée × (R1 + R2) / R2
-
-    float batteryVoltage =
-        voltageAtPin *
-        (
-            (BATTERY_R1 + BATTERY_R2) /
-            BATTERY_R2
-        );
-
-
-    return batteryVoltage;
 }

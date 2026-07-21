@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
+
 //======================================================
 // Nombre de locomotives
 //======================================================
@@ -21,7 +22,10 @@
 //======================================================
 // Structure locomotive
 //
-// Les noms sont stockés séparément en PROGMEM.
+// Contient uniquement les informations nécessaires
+// à la sélection de la locomotive.
+//
+// Les données sont stockées en mémoire Flash.
 //======================================================
 
 struct Locomotive
@@ -43,18 +47,17 @@ extern const Locomotive locomotives[LOCOMOTIVE_COUNT] PROGMEM;
 // Fonctions
 //======================================================
 
+// Recherche la locomotive correspondant
+// à la tension du sélecteur
+
 uint8_t Locomotives_GetIndex(
     float voltage);
 
 
+// Retourne le Radio ID de la locomotive
+
 uint8_t Locomotives_GetRadioId(
     uint8_t index);
-
-
-void Locomotives_GetName(
-    uint8_t index,
-    char* buffer,
-    uint8_t bufferSize);
 
 
 #endif

@@ -6,7 +6,6 @@
  ******************************************************************************/
 
 #include "Display.h"
-#include "Config.h"
 
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -26,31 +25,37 @@ Adafruit_SH1106 display(-1);
 
 void Display_Init()
 {
-    // Initialisation de l'écran SH1106
-    display.begin(SH1106_SWITCHCAPVCC, 0x3C);
+    display.begin(
+        SH1106_SWITCHCAPVCC,
+        0x3C
+    );
 
-    // Rotation utilisée sur la télécommande
     display.setRotation(2);
 
-    // Effacement
     display.clearDisplay();
 
-    // Couleur du texte
     display.setTextColor(WHITE);
 
-    // Affichage du premier écran
+    //==================================================
+    // Ecran de démarrage
+    //==================================================
+
     display.setTextSize(2);
+
     display.setCursor(0, 0);
+
     display.print(F("GDCC"));
 
     display.setTextSize(1);
+
     display.setCursor(0, 25);
-    display.print(F("OLED TEST"));
+
+    display.print(F("HANDSET V3"));
 
     display.setCursor(0, 40);
+
     display.print(F("DISPLAY OK"));
 
-    // Envoi vers l'écran
     display.display();
 }
 
@@ -61,7 +66,6 @@ void Display_Init()
 
 void Display_Update(
     const HandsetState &state,
-    const char* locoName,
     int potValue
 )
 {
@@ -69,38 +73,36 @@ void Display_Update(
 
 
     //==================================================
-    // Nom de la locomotive
+    // RADIO ID
     //==================================================
 
     display.setTextSize(2);
+
     display.setCursor(0, 0);
-    display.print(locoName);
 
+    display.print(F("LOCO "));
 
-    //==================================================
-    // Radio ID
-    //==================================================
-
-    display.setTextSize(1);
-    display.setCursor(0, 20);
-    display.print(F("Radio ID: "));
     display.print(state.loco);
 
 
     //==================================================
-    // Throttle
+    // THROTTLE
     //==================================================
 
-    display.setCursor(0, 32);
+    display.setTextSize(1);
+
+    display.setCursor(0, 22);
+
     display.print(F("Throttle: "));
+
     display.print(potValue);
 
 
     //==================================================
-    // Direction
+    // DIRECTION
     //==================================================
 
-    display.setCursor(0, 42);
+    display.setCursor(0, 34);
 
     if (state.throttle == 0)
     {
@@ -117,23 +119,30 @@ void Display_Update(
 
 
     //==================================================
-    // Etats LIGHT et ARU
+    // LIGHT
     //==================================================
 
-    display.setCursor(0, 54);
+    display.setCursor(0, 46);
 
-    display.print(F("L:"));
+    display.print(F("LIGHT: "));
 
     if (state.light)
     {
-        display.print(F("ON "));
+        display.print(F("ON"));
     }
     else
     {
         display.print(F("OFF"));
     }
 
-    display.print(F(" A:"));
+
+    //==================================================
+    // ARRET D'URGENCE
+    //==================================================
+
+    display.setCursor(0, 58);
+
+    display.print(F("ARU: "));
 
     if (state.emergencyStop)
     {
