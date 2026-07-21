@@ -10,27 +10,31 @@
 
 #include <Arduino.h>
 
+
 //======================================================
-// Etat complet de la télécommande
+// Etat de la télécommande
 //======================================================
 
 struct HandsetState
 {
     uint8_t loco;
 
-    int16_t throttle;
+    uint16_t throttle;
 
     bool directionForward;
 
     bool light;
 
     bool emergencyStop;
-
-    float batteryVoltage;
 };
+
 
 //======================================================
 // Paquet radio compatible V2.x
+//
+// IMPORTANT :
+// Cette structure reste strictement compatible
+// avec les récepteurs des locomotives V2.x
 //======================================================
 
 struct RadioPacket
@@ -41,5 +45,6 @@ struct RadioPacket
 
     int LIGHT_Value;
 };
+
 
 #endif

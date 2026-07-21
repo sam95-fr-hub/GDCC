@@ -11,10 +11,14 @@
 
 
 //======================================================
-// Liste des locomotives
+// Tableau des locomotives
+//
+// Stocké entièrement en mémoire Flash.
+// Cela libère la SRAM.
 //======================================================
 
-const Locomotive locomotives[LOCOMOTIVE_COUNT] =
+const Locomotive locomotives[LOCOMOTIVE_COUNT]
+PROGMEM =
 {
     { 0.10, 10 },
     { 0.54, 11 },
@@ -53,10 +57,12 @@ const char locoName11[] PROGMEM = "NEBULA";
 
 //======================================================
 // Tableau des pointeurs vers les noms
+//
+// Stocké en mémoire Flash.
 //======================================================
 
 const char* const locoNames[LOCOMOTIVE_COUNT]
-    PROGMEM =
+PROGMEM =
 {
     locoName0,
     locoName1,
@@ -82,10 +88,17 @@ uint8_t Locomotives_GetIndex(
 {
     uint8_t bestIndex = 0;
 
-    float bestDifference =
-        voltage -
-        locomotives[0].referenceVoltage;
+    // Lecture de la première tension depuis la Flash
+    float referenceVoltage;
 
+    memcpy_P(
+        &referenceVoltage,
+        &locomotives[0].referenceVoltage,
+        sizeof(float)
+    );
+
+    float bestDifference =
+        voltage - referenceVoltage;
 
     if (bestDifference < 0)
     {
@@ -98,9 +111,15 @@ uint8_t Locomotives_GetIndex(
          i < LOCOMOTIVE_COUNT;
          i++)
     {
+        // Lecture de la tension de référence depuis Flash
+        memcpy_P(
+            &referenceVoltage,
+            &locomotives[i].referenceVoltage,
+            sizeof(float)
+        );
+
         float difference =
-            voltage -
-            locomotives[i].referenceVoltage;
+            voltage - referenceVoltage;
 
 
         if (difference < 0)
@@ -137,8 +156,16 @@ uint8_t Locomotives_GetRadioId(
         return 0;
     }
 
+    uint8_t radioId;
 
-    return locomotives[index].radioId;
+    // Lecture depuis la Flash
+    memcpy_P(
+        &radioId,
+        &locomotives[index].radioId,
+        sizeof(uint8_t)
+    );
+
+    return radioId;
 }
 
 
@@ -169,13 +196,15 @@ void Locomotives_GetName(
 
     const char* namePointer =
         (const char*)pgm_read_word(
-            &(locoNames[index]));
+            &(locoNames[index])
+        );
 
 
     strncpy_P(
         buffer,
         namePointer,
-        bufferSize - 1);
+        bufferSize - 1
+    );
 
 
     buffer[bufferSize - 1] =

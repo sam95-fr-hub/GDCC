@@ -12,6 +12,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 
+
 //======================================================
 // Objet OLED
 //======================================================
@@ -40,14 +41,14 @@ void Display_Init()
     // Affichage du premier écran
     display.setTextSize(2);
     display.setCursor(0, 0);
-    display.print("GDCC");
+    display.print(F("GDCC"));
 
     display.setTextSize(1);
     display.setCursor(0, 25);
-    display.print("OLED TEST");
+    display.print(F("OLED TEST"));
 
     display.setCursor(0, 40);
-    display.print("DISPLAY OK");
+    display.print(F("DISPLAY OK"));
 
     // Envoi vers l'écran
     display.display();
@@ -66,47 +67,87 @@ void Display_Update(
 {
     display.clearDisplay();
 
+
+    //==================================================
     // Nom de la locomotive
+    //==================================================
+
     display.setTextSize(2);
     display.setCursor(0, 0);
     display.print(locoName);
 
+
+    //==================================================
     // Radio ID
+    //==================================================
+
     display.setTextSize(1);
     display.setCursor(0, 20);
-    display.print("Radio ID: ");
+    display.print(F("Radio ID: "));
     display.print(state.loco);
 
+
+    //==================================================
     // Throttle
+    //==================================================
+
     display.setCursor(0, 32);
-    display.print("Throttle: ");
+    display.print(F("Throttle: "));
     display.print(potValue);
 
+
+    //==================================================
     // Direction
+    //==================================================
+
     display.setCursor(0, 42);
 
     if (state.throttle == 0)
     {
-        display.print("STOP");
+        display.print(F("STOP"));
     }
     else if (state.directionForward)
     {
-        display.print("FORWARD");
+        display.print(F("FORWARD"));
     }
     else
     {
-        display.print("REVERSE");
+        display.print(F("REVERSE"));
     }
 
+
+    //==================================================
     // Etats LIGHT et ARU
+    //==================================================
+
     display.setCursor(0, 54);
 
-    display.print("L:");
-    display.print(state.light ? "ON " : "OFF");
+    display.print(F("L:"));
 
-    display.print(" A:");
-    display.print(state.emergencyStop ? "STOP" : "OK");
+    if (state.light)
+    {
+        display.print(F("ON "));
+    }
+    else
+    {
+        display.print(F("OFF"));
+    }
 
+    display.print(F(" A:"));
+
+    if (state.emergencyStop)
+    {
+        display.print(F("STOP"));
+    }
+    else
+    {
+        display.print(F("OK"));
+    }
+
+
+    //==================================================
     // Mise à jour OLED
+    //==================================================
+
     display.display();
 }

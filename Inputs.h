@@ -11,23 +11,39 @@
 #include <Arduino.h>
 #include "Types.h"
 
+
 //======================================================
-// Initialisation
+// Initialisation des entrées
 //======================================================
 
 void Inputs_Init();
 
+
 //======================================================
-// Mise à jour de l'état de la télécommande
+// Mise à jour des entrées de commande
+//
+// Lit :
+// - Sélecteur locomotive
+// - Throttle
+// - E-STOP
+// - LIGHT
+//
+// La batterie n'est PAS lue ici.
 //======================================================
 
 void Inputs_Update(HandsetState &state);
 
+
 //======================================================
-// Lecture du sélecteur de locomotive
+// Lecture de la tension batterie
+//
+// Cette fonction est appelée uniquement au démarrage
+// de la télécommande.
+//
+// Retour : tension batterie réelle en volts.
 //======================================================
 
-// Retourne l'index de la locomotive (0 à 11)
-uint8_t Inputs_ReadLocoSelector();
+float Inputs_ReadBatteryVoltage();
+
 
 #endif

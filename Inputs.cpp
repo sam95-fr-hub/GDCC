@@ -35,6 +35,10 @@ void Inputs_Init()
 
 //======================================================
 // Mise à jour de l'état
+//
+// Lecture des commandes uniquement.
+//
+// La batterie n'est volontairement PAS lue ici.
 //======================================================
 
 void Inputs_Update(HandsetState &state)
@@ -47,19 +51,25 @@ void Inputs_Update(HandsetState &state)
         analogRead(PIN_SELECTOR);
 
 
-    float selectorVoltage =
-        selectorADC *
-        (5.0 / 1023.0);
+    // Conversion ADC -> millivolts
 
+    uint16_t selectorMillivolts =
+        ((uint32_t)selectorADC * 5000UL) / 1023UL;
+
+
+    // Conversion en tension pour la recherche
+    // de la locomotive
 
     uint8_t locoIndex =
         Locomotives_GetIndex(
-            selectorVoltage);
+            selectorMillivolts / 1000.0
+        );
 
 
     state.loco =
         Locomotives_GetRadioId(
-            locoIndex);
+            locoIndex
+        );
 
 
     //==================================================
@@ -89,11 +99,13 @@ void Inputs_Update(HandsetState &state)
 
 
         state.throttle =
-            map(value,
+            map(
+                value,
                 512 + DEAD_ZONE,
                 1023,
                 0,
-                255);
+                255
+            );
     }
 
     else
@@ -105,11 +117,13 @@ void Inputs_Update(HandsetState &state)
 
 
         state.throttle =
-            map(value,
+            map(
+                value,
                 0,
                 512 - DEAD_ZONE,
                 255,
-                0);
+                0
+            );
     }
 
 
@@ -159,33 +173,50 @@ void Inputs_Update(HandsetState &state)
 
     lastLightButton =
         currentLightButton;
+}
 
 
-    //==================================================
-    // 5. BATTERIE
-    //==================================================
+//======================================================
+// Lecture de la tension batterie
+//
+// Cette fonction est appelée uniquement au démarrage.
+//
+// Le pont diviseur est :
+//
+// R1 = 4700 ohms
+// R2 = 6800 ohms
+//
+// La tension réelle batterie est calculée à partir
+// de la tension mesurée sur l'entrée A2.
+//======================================================
+
+float Inputs_ReadBatteryVoltage()
+{
+    // Lecture ADC
 
     int batteryADC =
         analogRead(PIN_BATTERY);
 
 
-    // Tension réellement présente sur A2
+    // Conversion ADC -> tension mesurée sur A2
 
-    float batteryPinVoltage =
+    float voltageAtPin =
         batteryADC *
         (5.0 / 1023.0);
 
 
-    // Reconstitution de la tension batterie
-    // avec le pont diviseur :
+    // Correction du pont diviseur
     //
-    // Batterie ---- R1 ---- A2 ---- R2 ---- GND
-    //
-    // R1 = 4700 ohms
-    // R2 = 6800 ohms
+    // Vbatterie =
+    // Vmesurée × (R1 + R2) / R2
 
-    state.batteryVoltage =
-        batteryPinVoltage *
-        (BATTERY_R1 + BATTERY_R2) /
-        BATTERY_R2;
+    float batteryVoltage =
+        voltageAtPin *
+        (
+            (BATTERY_R1 + BATTERY_R2) /
+            BATTERY_R2
+        );
+
+
+    return batteryVoltage;
 }

@@ -8,10 +8,10 @@
  * - Throttle
  * - LIGHT
  * - ARU
+ * - Lecture batterie au démarrage uniquement
  * - OLED dynamique
  *
  * Pas de :
- * - Lecture batterie
  * - NRF24L01
  *
  ******************************************************************************/
@@ -33,6 +33,13 @@ HandsetState handset;
 
 
 //======================================================
+// Tension batterie mesurée au démarrage
+//======================================================
+
+float startupBatteryVoltage = 0.0;
+
+
+//======================================================
 // SETUP
 //======================================================
 
@@ -41,6 +48,11 @@ void setup()
     Serial.begin(9600);
 
     delay(500);
+
+
+    //==================================================
+    // Message de démarrage
+    //==================================================
 
     Serial.println();
     Serial.println("==============================");
@@ -56,6 +68,31 @@ void setup()
     Inputs_Init();
 
     Serial.println("INPUTS OK");
+
+
+    //==================================================
+    // Lecture batterie
+    //==================================================
+
+    Serial.println();
+    Serial.println("------------------------------");
+    Serial.println("LECTURE BATTERIE");
+    Serial.println("------------------------------");
+
+
+    startupBatteryVoltage =
+        Inputs_ReadBatteryVoltage();
+
+
+    Serial.print("BATTERIE : ");
+    Serial.print(
+        startupBatteryVoltage,
+        2
+    );
+    Serial.println(" V");
+
+
+    Serial.println("LECTURE BATTERIE OK");
 
 
     //==================================================
@@ -82,10 +119,16 @@ void setup()
 
     handset.emergencyStop = false;
 
-    handset.batteryVoltage = 0.0;
 
+    //==================================================
+    // Message système prêt
+    //==================================================
 
+    Serial.println();
+    Serial.println("------------------------------");
     Serial.println("SYSTEME PRET");
+    Serial.println("------------------------------");
+
 
     delay(1000);
 }
@@ -169,6 +212,7 @@ void loop()
 
     Serial.print(" | DIRECTION : ");
 
+
     if (handset.throttle == 0)
     {
         Serial.print("STOP");
@@ -182,19 +226,31 @@ void loop()
         Serial.print("ARRIERE");
     }
 
+
     Serial.print(" | LIGHT : ");
 
+
     if (handset.light)
+    {
         Serial.print("ON");
+    }
     else
+    {
         Serial.print("OFF");
+    }
+
 
     Serial.print(" | ARU : ");
 
+
     if (handset.emergencyStop)
+    {
         Serial.println("ACTIF");
+    }
     else
+    {
         Serial.println("INACTIF");
+    }
 
 
     //==================================================

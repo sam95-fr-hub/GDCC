@@ -9,7 +9,7 @@
 #define LOCOMOTIVES_H
 
 #include <Arduino.h>
-
+#include <avr/pgmspace.h>
 
 //======================================================
 // Nombre de locomotives
@@ -36,7 +36,7 @@ struct Locomotive
 // Tableau des locomotives
 //======================================================
 
-extern const Locomotive locomotives[LOCOMOTIVE_COUNT];
+extern const Locomotive locomotives[LOCOMOTIVE_COUNT] PROGMEM;
 
 
 //======================================================
