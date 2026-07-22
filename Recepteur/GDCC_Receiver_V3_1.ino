@@ -30,6 +30,20 @@ RadioPacket radioPacket;
 
 
 //======================================================
+// Gestion du timeout radio
+//======================================================
+
+// Moment de réception du dernier paquet radio valide
+unsigned long lastRadioPacketTime = 0;
+
+
+// Etat actuel de la liaison radio
+// false = liaison perdue
+// true  = liaison active
+bool radioConnected = false;
+
+
+//======================================================
 // Initialisation
 //======================================================
 
@@ -43,7 +57,7 @@ void setup()
 
     Serial.println();
     Serial.println(F("================================"));
-    Serial.println(F("GDCC RECEPTEUR V3.0"));
+    Serial.println(F("GDCC RECEPTEUR V3.1"));
     Serial.println(F("Initialisation..."));
     Serial.println(F("================================"));
 
@@ -70,7 +84,20 @@ void setup()
     Functions_LightOff();
 
 
+    //==================================================
+    // Initialisation du timeout radio
+    //
+    // Le récepteur démarre en sécurité.
+    // Il attend le premier paquet valide.
+    //==================================================
+
+    lastRadioPacketTime = millis();
+
+    radioConnected = false;
+
+
     Serial.println(F("Systeme pret"));
+    Serial.println(F("Attente liaison radio..."));
 }
 
 
@@ -93,30 +120,64 @@ void loop()
         if (Radio_Receive(radioPacket))
         {
             //==========================================
-            // Traitement de la commande
+            // Paquet valide reçu
+            //
+            // Mise à jour du timer de sécurité
             //==========================================
 
+            lastRadioPacketTime = millis();
+
+
+            //==========================================
+            // Réactivation de la liaison radio
+            //==========================================
+
+            if (!radioConnected)
+            {
+                radioConnected = true;
+
+                Serial.println(
+                    F("RADIO OK - LIAISON RETABLIE")
+                );
+            }
+
+
+            //==========================================
             // ARU
+            //==========================================
+
             if (radioPacket.ARU == 1)
             {
                 Motor_Stop();
 
                 Functions_LightOff();
 
-                Serial.println(F("ARU ACTIF"));
+                Serial.println(
+                    F("ARU ACTIF")
+                );
             }
 
+
+            //==========================================
             // Batterie faible
+            //==========================================
+
             else if (Battery_IsLow())
             {
                 Motor_Stop();
 
                 Functions_LightOff();
 
-                Serial.println(F("BATTERIE FAIBLE"));
+                Serial.println(
+                    F("BATTERIE FAIBLE")
+                );
             }
 
+
+            //==========================================
             // Fonctionnement normal
+            //==========================================
+
             else
             {
                 //======================================
@@ -136,7 +197,9 @@ void loop()
                 // Eclairage
                 //======================================
 
-                if (radioPacket.LIGHT_Value == 1)
+                if (
+                    radioPacket.LIGHT_Value == 1
+                )
                 {
                     Functions_LightOn();
                 }
@@ -146,6 +209,49 @@ void loop()
                 }
             }
         }
+    }
+
+
+    //==================================================
+    // TIMEOUT RADIO
+    //
+    // Vérification permanente de la liaison.
+    //
+    // Si aucun paquet valide n'a été reçu pendant
+    // RADIO_TIMEOUT, le récepteur passe en sécurité.
+    //==================================================
+
+    if (
+        radioConnected &&
+        (
+            millis() - lastRadioPacketTime >=
+            RADIO_TIMEOUT
+        )
+    )
+    {
+        //==============================================
+        // La liaison radio est considérée comme perdue
+        //==============================================
+
+        radioConnected = false;
+
+
+        //==============================================
+        // Mise en sécurité
+        //==============================================
+
+        Motor_Stop();
+
+        Functions_LightOff();
+
+
+        //==============================================
+        // Message diagnostic
+        //==============================================
+
+        Serial.println(
+            F("!!! RADIO LOST - SECURITE !!!")
+        );
     }
 
 

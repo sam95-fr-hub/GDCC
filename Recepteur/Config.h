@@ -34,6 +34,18 @@
 
 
 //======================================================
+// SECURITE - TIMEOUT RADIO
+//
+// Si aucun paquet radio valide n'est reçu pendant
+// cette durée, le récepteur passe en sécurité.
+//
+// 500 ms = 0,5 seconde
+//======================================================
+
+#define RADIO_TIMEOUT 500UL
+
+
+//======================================================
 // L298N - MOTEUR
 //======================================================
 
