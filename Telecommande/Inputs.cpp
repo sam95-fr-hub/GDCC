@@ -1,7 +1,11 @@
+```cpp
 /******************************************************************************
  *
  * GDCC
  * Gestion des entrées de la télécommande
+ *
+ * Version V3.1
+ * Architecture modulaire
  *
  ******************************************************************************/
 
@@ -16,13 +20,25 @@
 
 void Inputs_Init()
 {
-    pinMode(PIN_SELECTOR, INPUT);
+    pinMode(
+        PIN_SELECTOR,
+        INPUT
+    );
 
-    pinMode(PIN_THROTTLE, INPUT);
+    pinMode(
+        PIN_THROTTLE,
+        INPUT
+    );
 
-    pinMode(PIN_ESTOP, INPUT_PULLUP);
+    pinMode(
+        PIN_ESTOP,
+        INPUT_PULLUP
+    );
 
-    pinMode(PIN_LIGHT, INPUT_PULLUP);
+    pinMode(
+        PIN_LIGHT,
+        INPUT_PULLUP
+    );
 }
 
 
@@ -39,11 +55,18 @@ void Inputs_Update(
     //==================================================
 
     int selectorADC =
-        analogRead(PIN_SELECTOR);
+        analogRead(
+            PIN_SELECTOR
+        );
 
 
     uint16_t selectorMillivolts =
-        ((uint32_t)selectorADC * 5000UL) / 1023UL;
+        (
+            (uint32_t)selectorADC *
+            5000UL
+        )
+        /
+        1023UL;
 
 
     uint8_t locoIndex =
@@ -63,31 +86,82 @@ void Inputs_Update(
     //==================================================
 
     int value =
-        analogRead(PIN_THROTTLE);
+        analogRead(
+            PIN_THROTTLE
+        );
 
 
-    // Valeur brute conservée pour compatibilité V2.x
+    //==================================================
+    // Valeur brute du potentiomètre
+    //
+    // Cette valeur reste disponible localement
+    // pour l'affichage ou le diagnostic.
+    //
+    // IMPORTANT :
+    // Elle n'est plus transmise par radio.
+    //
+    // La transmission utilise désormais :
+    //
+    //   state.throttle         -> 0 à 255
+    //   state.directionForward -> avant / arrière
+    //==================================================
 
     state.potValue =
         value;
 
 
+    //==================================================
     // Zone morte centrale
+    //==================================================
 
-    if (abs(value - 512) < DEAD_ZONE)
+    if (
+        abs(value - 512) <
+        DEAD_ZONE
+    )
     {
-        state.throttle = 0;
-
-        state.directionForward = true;
-    }
-
-    else if (value > 512)
-    {
-        // Marche avant
-
-        state.directionForward = true;
+        //==============================================
+        // Arrêt
+        //==============================================
 
         state.throttle =
+            0;
+
+
+        //==============================================
+        // Direction par défaut
+        //
+        // La direction est sans importance lorsque
+        // throttle = 0.
+        //
+        // On conserve AVANT comme valeur par défaut.
+        //==============================================
+
+        state.directionForward =
+            true;
+    }
+
+
+    //==================================================
+    // Marche avant
+    //==================================================
+
+    else if (
+        value >
+        512
+    )
+    {
+        state.directionForward =
+            true;
+
+
+        //==============================================
+        // Conversion :
+        //
+        // 512 + DEAD_ZONE -> 0
+        // 1023            -> 255
+        //==============================================
+
+        long throttle =
             map(
                 value,
                 512 + DEAD_ZONE,
@@ -95,15 +169,44 @@ void Inputs_Update(
                 0,
                 255
             );
+
+
+        //==============================================
+        // Sécurité :
+        // limitation à 0-255
+        //==============================================
+
+        throttle =
+            constrain(
+                throttle,
+                0,
+                255
+            );
+
+
+        state.throttle =
+            (uint8_t) throttle;
     }
+
+
+    //==================================================
+    // Marche arrière
+    //==================================================
 
     else
     {
-        // Marche arrière
+        state.directionForward =
+            false;
 
-        state.directionForward = false;
 
-        state.throttle =
+        //==============================================
+        // Conversion :
+        //
+        // 0                 -> 255
+        // 512 - DEAD_ZONE   -> 0
+        //==============================================
+
+        long throttle =
             map(
                 value,
                 0,
@@ -111,6 +214,23 @@ void Inputs_Update(
                 255,
                 0
             );
+
+
+        //==============================================
+        // Sécurité :
+        // limitation à 0-255
+        //==============================================
+
+        throttle =
+            constrain(
+                throttle,
+                0,
+                255
+            );
+
+
+        state.throttle =
+            (uint8_t) throttle;
     }
 
 
@@ -123,11 +243,25 @@ void Inputs_Update(
 
 
     bool currentEstopButton =
-        digitalRead(PIN_ESTOP);
+        digitalRead(
+            PIN_ESTOP
+        );
 
 
-    if (lastEstopButton == HIGH &&
-        currentEstopButton == LOW)
+    //==================================================
+    // Détection d'un nouvel appui
+    //
+    // Le bouton est relié à la masse.
+    //
+    // HIGH -> LOW = nouvel appui
+    //
+    // Chaque appui inverse l'état de l'ARU.
+    //==================================================
+
+    if (
+        lastEstopButton == HIGH &&
+        currentEstopButton == LOW
+    )
     {
         state.emergencyStop =
             !state.emergencyStop;
@@ -138,37 +272,62 @@ void Inputs_Update(
         currentEstopButton;
 
 
-//======================================================
-// 4. LIGHT
-//======================================================
+    //==================================================
+    // 4. LIGHT
+    //==================================================
 
-static bool lastLightButton = HIGH;
-
-bool currentLightButton =
-    digitalRead(PIN_LIGHT);
+    static bool lastLightButton =
+        HIGH;
 
 
-// Détection d'un appui
-// Bouton relié à la masse
-if (lastLightButton == HIGH &&
-    currentLightButton == LOW)
-{
-    state.light =
-        !state.light;
+    bool currentLightButton =
+        digitalRead(
+            PIN_LIGHT
+        );
 
-    Serial.print(F("LIGHT CHANGE : "));
 
-    if (state.light)
+    //==================================================
+    // Détection d'un nouvel appui
+    //
+    // Le bouton est relié à la masse.
+    //
+    // HIGH -> LOW = nouvel appui
+    //
+    // Chaque appui inverse l'état de l'éclairage.
+    //==================================================
+
+    if (
+        lastLightButton == HIGH &&
+        currentLightButton == LOW
+    )
     {
-        Serial.println(F("ON"));
-    }
-    else
-    {
-        Serial.println(F("OFF"));
-    }
-}
+        state.light =
+            !state.light;
 
 
-lastLightButton =
-    currentLightButton;
+        Serial.print(
+            F("LIGHT CHANGE : ")
+        );
+
+
+        if (
+            state.light
+        )
+        {
+            Serial.println(
+                F("ON")
+            );
+        }
+        else
+        {
+            Serial.println(
+                F("OFF")
+            );
+        }
+    }
+
+
+    lastLightButton =
+        currentLightButton;
 }
+```

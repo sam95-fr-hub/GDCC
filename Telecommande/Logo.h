@@ -3,7 +3,14 @@
 
 #include <Arduino.h>
 
-extern const unsigned char logoBitmap[];
-extern const unsigned char lightBitmap[];
+#define LOGO_WIDTH 64
+#define LOGO_HEIGHT 64
+
+extern const unsigned char logoBitmap[] PROGMEM;
+
+#define LIGHT_WIDTH 20
+#define LIGHT_HEIGHT 20
+
+extern const unsigned char lightBitmap[] PROGMEM;
 
 #endif
