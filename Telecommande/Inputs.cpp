@@ -1,4 +1,4 @@
-```cpp
+
 /******************************************************************************
  *
  * GDCC
@@ -330,4 +330,3 @@ void Inputs_Update(
     lastLightButton =
         currentLightButton;
 }
-```

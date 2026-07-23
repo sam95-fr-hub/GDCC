@@ -1,4 +1,4 @@
-```cpp
+
 /******************************************************************************
  *
  * GDCC
@@ -52,13 +52,16 @@ void Radio_Init(
     //==================================================
     // Initialisation du NRF24L01
     //
-    // L'identifiant radio correspond à la locomotive
-    // actuellement sélectionnée.
+    // RADIO_ID est l'identifiant propre de la
+    // télécommande.
+    //
+    // L'adresse de destination sera ensuite définie
+    // par state.loco lors de l'envoi.
     //==================================================
 
     if (
         !radio.init(
-            state.loco,
+            RADIO_ID,
             PIN_NRF_CE,
             PIN_NRF_CSN
         )
@@ -83,7 +86,11 @@ void Radio_Init(
 
 
     //==================================================
-    // Mémorisation de l'ID actif
+    // Mémorisation de l'ID de la locomotive active
+    //
+    // La radio est initialisée avec son propre ID,
+    // puis les transmissions sont envoyées vers
+    // state.loco.
     //==================================================
 
     currentRadioId =
@@ -99,7 +106,16 @@ void Radio_Init(
     //==================================================
 
     Serial.print(
-        F("NRF24L01 OK - RADIO ID : ")
+        F("NRF24L01 OK - EMETTEUR ID : ")
+    );
+
+    Serial.println(
+        RADIO_ID
+    );
+
+
+    Serial.print(
+        F("LOCO DESTINATION ID : ")
     );
 
     Serial.println(
@@ -111,11 +127,17 @@ void Radio_Init(
 //======================================================
 // Changement de locomotive
 //
-// Cette fonction reconfigure le NRF24L01 avec le nouvel
-// identifiant radio.
+// IMPORTANT :
+// Le NRF24L01 de l'émetteur conserve son propre
+// identifiant RADIO_ID.
 //
-// Elle permet de changer de locomotive à la volée,
-// sans redémarrer la télécommande.
+// Il n'est PAS réinitialisé avec l'ID de la locomotive.
+//
+// L'ID de la locomotive est uniquement utilisé comme
+// adresse de destination lors de radio.send().
+//
+// Cette méthode est identique au fonctionnement V2
+// qui fonctionne avec les locomotives 10, 11 et 12.
 //======================================================
 
 static void Radio_SelectLoco(
@@ -156,30 +178,12 @@ static void Radio_SelectLoco(
 
 
     //==================================================
-    // Réinitialisation du NRF24L01
+    // Mémorisation du nouvel ID de destination
     //
-    // Le nouvel ID devient l'adresse radio utilisée
-    // pour les transmissions suivantes.
-    //==================================================
-
-    if (
-        !radio.init(
-            newRadioId,
-            PIN_NRF_CE,
-            PIN_NRF_CSN
-        )
-    )
-    {
-        Serial.println(
-            F("ERREUR : IMPOSSIBLE DE SELECTIONNER LA LOCO")
-        );
-
-        return;
-    }
-
-
-    //==================================================
-    // Mémorisation du nouvel ID
+    // IMPORTANT :
+    // On ne fait PAS de radio.init() ici.
+    //
+    // La radio reste configurée avec RADIO_ID = 1.
     //==================================================
 
     currentRadioId =
@@ -187,7 +191,7 @@ static void Radio_SelectLoco(
 
 
     Serial.print(
-        F("RADIO CONFIGUREE - LOCO ID : ")
+        F("DESTINATION RADIO CONFIGUREE - LOCO ID : ")
     );
 
     Serial.println(
@@ -220,9 +224,7 @@ void Radio_Send(
     // Vérification du changement de locomotive
     //
     // Si le sélecteur 12 positions a changé de position,
-    // l'identifiant radio change également.
-    //
-    // Le NRF24L01 est alors automatiquement reconfiguré.
+    // l'adresse de destination change également.
     //==================================================
 
     if (
@@ -245,11 +247,8 @@ void Radio_Send(
     //==================================================
     // Vitesse
     //
-    // La télécommande transmet directement la valeur
-    // normalisée 0-255.
-    //
-    // La valeur brute du potentiomètre 0-1023
-    // n'est plus transmise.
+    // 0   = arrêt
+    // 255 = vitesse maximale
     //==================================================
 
     packet.throttle =
@@ -259,8 +258,8 @@ void Radio_Send(
     //==================================================
     // Direction
     //
-    // false = arrière = 0
-    // true  = avant  = 1
+    // 0 = arrière
+    // 1 = avant
     //==================================================
 
     packet.direction =
@@ -272,8 +271,8 @@ void Radio_Send(
     //==================================================
     // Arrêt d'urgence
     //
-    // false = normal = 0
-    // true  = ARU    = 1
+    // 0 = normal
+    // 1 = ARU actif
     //==================================================
 
     packet.ARU =
@@ -285,8 +284,8 @@ void Radio_Send(
     //==================================================
     // Eclairage
     //
-    // false = éteint = 0
-    // true  = allumé = 1
+    // 0 = éteint
+    // 1 = allumé
     //==================================================
 
     packet.LIGHT_Value =
@@ -297,12 +296,16 @@ void Radio_Send(
 
     //==================================================
     // Transmission radio
+    //
+    // L'émetteur utilise toujours RADIO_ID = 1.
+    //
+    // La locomotive sélectionnée est l'adresse
+    // de destination.
     //==================================================
 
     radio.send(
-        state.loco,
+        currentRadioId,
         &packet,
         sizeof(packet)
     );
 }
-```
