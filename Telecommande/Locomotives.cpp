@@ -47,7 +47,7 @@ PROGMEM =
 
 const char locoName0[] PROGMEM = "RUSTY";
 const char locoName1[] PROGMEM = "GEMINI";
-const char locoName2[] PROGMEM = "LIGHTNING";
+const char locoName2[] PROGMEM = "TOMY";
 const char locoName3[] PROGMEM = "THUNDER";
 const char locoName4[] PROGMEM = "STORM";
 const char locoName5[] PROGMEM = "BLAZE";

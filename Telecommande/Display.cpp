@@ -11,6 +11,7 @@
 #include "Display.h"
 #include "Locomotives.h"
 #include "logo.h"
+#include "Battery.h"
 
 #include <Wire.h>
 #include <U8g2lib.h>
@@ -47,6 +48,10 @@ static bool lastARU = false;
 
 void Display_Init()
 {
+    //==================================================
+    // Initialisation écran
+    //==================================================
+
     display.begin();
 
     display.setPowerSave(0);
@@ -69,7 +74,6 @@ void Display_Init()
             64,
             logoBitmap
         );
-
     }
     while (
         display.nextPage()
@@ -131,6 +135,115 @@ void Display_Init()
 
 
     //==================================================
+    // ECRAN 3 : VERIFICATION BATTERIE
+    //==================================================
+
+    float batteryVoltage =
+        Battery_ReadVoltage();
+
+
+    //==================================================
+    // Batterie faible
+    //==================================================
+
+    if (
+        batteryVoltage < 6.4
+    )
+    {
+        display.firstPage();
+
+        do
+        {
+            //==========================================
+            // Titre
+            //==========================================
+
+            display.setFont(
+                u8g2_font_helvB12_tf
+            );
+
+            display.setCursor(
+                16,
+                16
+            );
+
+            display.print(
+                F("BATTERIE")
+            );
+
+
+            //==========================================
+            // Message
+            //==========================================
+
+            display.setCursor(
+                22,
+                34
+            );
+
+            display.print(
+                F("FAIBLE !")
+            );
+
+
+            //==========================================
+            // Tension
+            //==========================================
+
+            display.setFont(
+                u8g2_font_6x10_tf
+            );
+
+            display.setCursor(
+                36,
+                47
+            );
+
+            display.print(
+                batteryVoltage,
+                2
+            );
+
+            display.print(
+                F(" V")
+            );
+
+
+            //==========================================
+            // Consigne
+            //==========================================
+
+            display.setCursor(
+                22,
+                61
+            );
+
+            display.print(
+                F("CHARGER BATTERIE")
+            );
+
+        }
+        while (
+            display.nextPage()
+        );
+
+
+        //================================================
+        // L'écran reste affiché
+        //
+        // Pour le moment, le programme reste bloqué ici.
+        // Il faut recharger la batterie puis redémarrer
+        // la télécommande.
+        //================================================
+
+        while (1)
+        {
+            delay(1000);
+        }
+    }
+
+
+    //==================================================
     // Forcer premier affichage
     //==================================================
 
@@ -154,6 +267,16 @@ void Display_Update(
 )
 {
     bool needUpdate = false;
+
+
+    //==================================================
+    // Lecture tension batterie
+    //==================================================
+
+    static float lastBatteryVoltage = -1.0;
+
+    float batteryVoltage =
+        Battery_ReadVoltage();
 
 
     //==================================================
@@ -186,6 +309,22 @@ void Display_Update(
 
     if (
         state.emergencyStop != lastARU
+    )
+    {
+        needUpdate = true;
+    }
+
+
+    //==================================================
+    // Mise à jour si la tension change de 0,1 V
+    //==================================================
+
+    if (
+        lastBatteryVoltage < 0 ||
+        abs(
+            batteryVoltage -
+            lastBatteryVoltage
+        ) >= 0.1
     )
     {
         needUpdate = true;
@@ -342,7 +481,7 @@ void Display_Update(
 
         display.setCursor(
             nameX,
-            14
+            13
         );
 
 
@@ -352,7 +491,7 @@ void Display_Update(
 
 
         //================================================
-        // ID
+        // LIGNE ID + DIRECTION
         //================================================
 
         display.setFont(
@@ -360,20 +499,80 @@ void Display_Update(
         );
 
 
+        //===============================================
+        // ID à gauche
+        //===============================================
+
         display.setCursor(
-            52,
+            2,
             25
         );
 
 
         display.print(
-            F("ID: ")
+            F("ID:")
         );
 
 
         display.print(
             state.loco
         );
+
+
+        //===============================================
+        // Direction à droite
+        //===============================================
+
+        if (
+            state.emergencyStop
+        )
+        {
+            display.setCursor(
+                70,
+                25
+            );
+
+            display.print(
+                F("ARU")
+            );
+        }
+        else if (
+            directionState == 0
+        )
+        {
+            display.setCursor(
+                88,
+                25
+            );
+
+            display.print(
+                F("ARRET")
+            );
+        }
+        else if (
+            directionState == 1
+        )
+        {
+            display.setCursor(
+                78,
+                25
+            );
+
+            display.print(
+                F("^ AVANT")
+            );
+        }
+        else
+        {
+            display.setCursor(
+                72,
+                25
+            );
+
+            display.print(
+                F("v ARRIERE")
+            );
+        }
 
 
         //================================================
@@ -386,9 +585,8 @@ void Display_Update(
         {
             display.setCursor(
                 32,
-                39
+                40
             );
-
 
             display.print(
                 F("!!! ARU !!!")
@@ -399,7 +597,6 @@ void Display_Update(
                 20,
                 56
             );
-
 
             display.print(
                 F("ARRET URGENCE")
@@ -414,58 +611,15 @@ void Display_Update(
         else
         {
             //============================================
-            // DIRECTION
-            //============================================
-
-            if (
-                directionState == 0
-            )
-            {
-                display.setCursor(
-                    48,
-                    38
-                );
-
-
-                display.print(
-                    F("ARRET")
-                );
-            }
-            else if (
-                directionState == 1
-            )
-            {
-                display.setCursor(
-                    38,
-                    38
-                );
-
-
-                display.print(
-                    F("^ AVANT")
-                );
-            }
-            else
-            {
-                display.setCursor(
-                    34,
-                    38
-                );
-
-
-                display.print(
-                    F("v ARRIERE")
-                );
-            }
-
-
-            //============================================
             // BARRE VITESSE
+            //
+            // Remontée pour libérer la ligne du bas
+            // pour la batterie et l'icône lumière.
             //============================================
 
             display.drawFrame(
                 9,
-                42,
+                31,
                 110,
                 8
             );
@@ -477,7 +631,7 @@ void Display_Update(
             {
                 display.drawBox(
                     11,
-                    44,
+                    33,
                     speed,
                     4
                 );
@@ -492,17 +646,56 @@ void Display_Update(
                 state.light
             )
             {
-                display.setCursor(
-                    4,
-                    63
-                );
-
-
-                display.print(
-                    F("[*]")
+                display.drawXBMP(
+                    2,
+                    48,
+                    14,
+                    14,
+                    lightBitmap
                 );
             }
         }
+
+
+        //================================================
+        // TENSION BATTERIE
+        //
+        // Affichage en bas à droite
+        //================================================
+
+        char batteryText[10];
+
+
+        dtostrf(
+            batteryVoltage,
+            4,
+            1,
+            batteryText
+        );
+
+
+        uint16_t batteryWidth =
+            display.getStrWidth(
+                batteryText
+            );
+
+
+        display.setCursor(
+            128 -
+            batteryWidth -
+            6,
+            62
+        );
+
+
+        display.print(
+            batteryText
+        );
+
+
+        display.print(
+            F("V")
+        );
 
     }
     while (
@@ -525,4 +718,7 @@ void Display_Update(
 
     lastARU =
         state.emergencyStop;
+
+    lastBatteryVoltage =
+        batteryVoltage;
 }
