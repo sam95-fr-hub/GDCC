@@ -3,13 +3,13 @@
  * GDCC
  * Récepteur locomotive
  *
- * Version V3.1
+ * Version V3.1 / V3.2
  * Architecture modulaire
  *
  * Matériel :
  *   Arduino Nano
  *   NRF24L01
- *   L298N
+ *   L298N / DRV8871
  *
  ******************************************************************************/
 
@@ -56,10 +56,22 @@ void setup()
     Serial.begin(9600);
 
     Serial.println();
-    Serial.println(F("================================"));
-    Serial.println(F("GDCC RECEPTEUR V3.1"));
-    Serial.println(F("Initialisation..."));
-    Serial.println(F("================================"));
+
+    Serial.println(
+        F("================================")
+    );
+
+    Serial.println(
+        F("GDCC RECEPTEUR V3.2")
+    );
+
+    Serial.println(
+        F("Initialisation...")
+    );
+
+    Serial.println(
+        F("================================")
+    );
 
 
     //==================================================
@@ -70,7 +82,39 @@ void setup()
 
     Functions_Init();
 
+
+    //==================================================
+    // Initialisation surveillance batterie
+    //
+    // Activée uniquement si :
+    //
+    // BATTERY_MONITOR_ENABLED == true
+    //
+    // Si false :
+    // - Battery_Init() n'est pas appelé
+    // - aucune mesure batterie n'est effectuée
+    //==================================================
+
+#if BATTERY_MONITOR_ENABLED
+
     Battery_Init();
+
+    Serial.println(
+        F("Surveillance batterie : ACTIVE")
+    );
+
+#else
+
+    Serial.println(
+        F("Surveillance batterie : DESACTIVEE")
+    );
+
+#endif
+
+
+    //==================================================
+    // Initialisation radio
+    //==================================================
 
     Radio_Init();
 
@@ -91,13 +135,20 @@ void setup()
     // Il attend le premier paquet valide.
     //==================================================
 
-    lastRadioPacketTime = millis();
+    lastRadioPacketTime =
+        millis();
 
-    radioConnected = false;
+    radioConnected =
+        false;
 
 
-    Serial.println(F("Systeme pret"));
-    Serial.println(F("Attente liaison radio..."));
+    Serial.println(
+        F("Systeme pret")
+    );
+
+    Serial.println(
+        F("Attente liaison radio...")
+    );
 }
 
 
@@ -111,13 +162,19 @@ void loop()
     // Vérification réception radio
     //==================================================
 
-    if (Radio_Available())
+    if (
+        Radio_Available()
+    )
     {
         //==============================================
         // Lecture du paquet
         //==============================================
 
-        if (Radio_Receive(radioPacket))
+        if (
+            Radio_Receive(
+                radioPacket
+            )
+        )
         {
             //==========================================
             // Paquet valide reçu
@@ -125,16 +182,20 @@ void loop()
             // Mise à jour du timer de sécurité
             //==========================================
 
-            lastRadioPacketTime = millis();
+            lastRadioPacketTime =
+                millis();
 
 
             //==========================================
             // Réactivation de la liaison radio
             //==========================================
 
-            if (!radioConnected)
+            if (
+                !radioConnected
+            )
             {
-                radioConnected = true;
+                radioConnected =
+                    true;
 
                 Serial.println(
                     F("RADIO OK - LIAISON RETABLIE")
@@ -143,43 +204,95 @@ void loop()
 
 
             //==========================================
-            // ARU
+            // ARRET D'URGENCE
+            //==========================================
+            //
+            // IMPORTANT :
+            //
+            // Si ARU == 1, on arrête le moteur
+            // et on n'exécute PAS la commande normale.
+            //
+            // Le "else" garantit que les commandes
+            // moteur normales sont mutuellement
+            // exclusives avec l'ARU.
             //==========================================
 
-            if (radioPacket.ARU == 1)
+            if (
+                radioPacket.ARU == 1
+            )
             {
+                Serial.println(
+                    F(">>> ARU ACTIF : ARRET FORCE <<<")
+                );
+
+
+                //======================================
+                // Arrêt moteur
+                //======================================
+
                 Motor_Stop();
 
-                Functions_LightOff();
 
-                Serial.println(
-                    F("ARU ACTIF")
-                );
+                //======================================
+                // Extinction éclairage
+                //======================================
+
+                Functions_LightOff();
             }
 
 
             //==========================================
-            // Batterie faible
+            // BATTERIE FAIBLE
             //==========================================
 
-            else if (Battery_IsLow())
+#if BATTERY_MONITOR_ENABLED
+
+            else if (
+                Battery_IsLow()
+            )
             {
+                Serial.println(
+                    F(">>> BATTERIE FAIBLE : ARRET FORCE <<<")
+                );
+
+
+                //======================================
+                // Arrêt moteur
+                //======================================
+
                 Motor_Stop();
 
-                Functions_LightOff();
 
-                Serial.println(
-                    F("BATTERIE FAIBLE")
-                );
+                //======================================
+                // Extinction éclairage
+                //======================================
+
+                Functions_LightOff();
             }
 
+#endif
+
 
             //==========================================
-            // Fonctionnement normal
+            // FONCTIONNEMENT NORMAL
             //==========================================
+
+#if BATTERY_MONITOR_ENABLED
 
             else
+
+#else
+
+            else
+
+#endif
+
             {
+                Serial.println(
+                    F(">>> ARU INACTIF : COMMANDE NORMALE <<<")
+                );
+
+
                 //======================================
                 // Commande moteur
                 //======================================
@@ -187,6 +300,7 @@ void loop()
                 Motor_SetDirection(
                     radioPacket.direction
                 );
+
 
                 Motor_SetSpeed(
                     radioPacket.throttle
@@ -224,7 +338,8 @@ void loop()
     if (
         radioConnected &&
         (
-            millis() - lastRadioPacketTime >=
+            millis() -
+            lastRadioPacketTime >=
             RADIO_TIMEOUT
         )
     )
@@ -233,7 +348,8 @@ void loop()
         // La liaison radio est considérée comme perdue
         //==============================================
 
-        radioConnected = false;
+        radioConnected =
+            false;
 
 
         //==============================================
@@ -260,12 +376,24 @@ void loop()
     //
     // La batterie est contrôlée même sans réception
     // d'un nouveau paquet radio.
+    //
+    // Cette partie est compilée uniquement si :
+    //
+    // BATTERY_MONITOR_ENABLED == true
+    //
+    // Si false :
+    // aucune lecture de A2 n'est effectuée.
     //==================================================
 
-    static unsigned long lastBatteryCheck = 0;
+#if BATTERY_MONITOR_ENABLED
+
+    static unsigned long lastBatteryCheck =
+        0;
+
 
     if (
-        millis() - lastBatteryCheck >=
+        millis() -
+        lastBatteryCheck >=
         BATTERY_CHECK_INTERVAL
     )
     {
@@ -281,10 +409,12 @@ void loop()
             F("Batterie : ")
         );
 
+
         Serial.print(
             batteryVoltage,
             2
         );
+
 
         Serial.println(
             F(" V")
@@ -309,4 +439,6 @@ void loop()
             );
         }
     }
+
+#endif
 }
