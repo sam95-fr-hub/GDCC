@@ -234,7 +234,7 @@
 // Exemple RF-Nano sans mesure batterie.
 //
 
-#define BATTERY_MONITOR_ENABLED false
+#define BATTERY_MONITOR_ENABLED true
 
 
 //======================================================
@@ -255,27 +255,27 @@
 // PONT DIVISEUR DE TENSION
 //======================================================
 //
-// R1 = 10 kOhm
-// R2 = 27 kOhm
+// R1 = 27 kOhm
+// R2 = 10 kOhm
 //
 // Batterie -> R1 -> A2 -> R2 -> GND
 //
 
-#define BATTERY_R1 10000.0
-#define BATTERY_R2 27000.0
+#define BATTERY_R1 27000.0
+#define BATTERY_R2 10000.0
 
 
 //======================================================
 // SEUIL BATTERIE MINIMUM
 //======================================================
 //
-// Coupure de sécurité à 12.8 V
+// Coupure de sécurité à 13.2 V
 //
 // Utilisé uniquement si la mesure batterie
 // est activée.
 //
 
-#define BATTERY_MIN_VOLTAGE 12.8
+#define BATTERY_MIN_VOLTAGE 13.2
 
 
 //======================================================
