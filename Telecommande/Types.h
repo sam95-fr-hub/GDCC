@@ -35,7 +35,7 @@ struct HandsetState
 // logique dans RadioPacket.destination.
 //==================================================
 
-```
+
 uint8_t loco;
 
 
@@ -98,7 +98,7 @@ bool light;
 //==================================================
 
 bool emergencyStop;
-```
+
 
 };
 
@@ -185,7 +185,7 @@ struct RadioPacket
 // physique GDCC_RADIO_NETWORK_ID.
 //==================================================
 
-```
+
 uint8_t destination;
 
 
@@ -239,7 +239,7 @@ uint8_t ARU;
 //==================================================
 
 uint8_t LIGHT_Value;
-```
+
 
 };
 

@@ -58,7 +58,7 @@ const HandsetState &state
 // de NRFLite.
 //==================================================
 
-```
+
 if (
     !radio.init(
         RADIO_ID,
@@ -137,7 +137,7 @@ Serial.print(
 Serial.println(
     RADIO_CHANNEL
 );
-```
+
 
 }
 
@@ -153,7 +153,7 @@ const HandsetState &state
 // Vérification de l'initialisation
 //==================================================
 
-```
+
 if (
     !radioInitialized
 )
@@ -274,6 +274,6 @@ radio.send(
     sizeof(packet),
     NRFLite::NO_ACK
 );
-```
+
 
 }
