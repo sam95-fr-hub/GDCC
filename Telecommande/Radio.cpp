@@ -1,13 +1,13 @@
-
 /******************************************************************************
- *
- * GDCC
- * Communication radio NRF24L01
- *
- * Version V3.1
- * Architecture modulaire
- *
- ******************************************************************************/
+*
+
+* GDCC
+* Communication radio NRF24L01
+*
+* Version V4.0
+*
+
+******************************************************************************/
 
 #include "Radio.h"
 #include "Config.h"
@@ -15,297 +15,265 @@
 #include <SPI.h>
 #include <NRFLite.h>
 
-
 //======================================================
 // Objet radio NRF24L01
 //======================================================
 
 static NRFLite radio;
 
-
 //======================================================
-// Identifiant radio actuellement configuré
-//
-// 0 = aucun ID encore configuré
-//
-// L'ID réel des locomotives doit être différent de 0.
-//======================================================
-
-static uint8_t currentRadioId = 0;
-
-
-//======================================================
-// Indique si le module radio a été initialisé
+// Etat d'initialisation de la radio
 //======================================================
 
 static bool radioInitialized = false;
-
 
 //======================================================
 // Initialisation du module radio
 //======================================================
 
 void Radio_Init(
-    const HandsetState &state
+const HandsetState &state
 )
 {
-    //==================================================
-    // Initialisation du NRF24L01
-    //
-    // RADIO_ID est l'identifiant propre de la
-    // télécommande.
-    //
-    // L'adresse de destination sera ensuite définie
-    // par state.loco lors de l'envoi.
-    //==================================================
+//==================================================
+// Initialisation du NRF24L01
+//
+// La télécommande possède son propre identifiant
+// radio physique.
+//
+// Les récepteurs utilisent tous la même adresse
+// radio physique de réseau :
+//
+//     GDCC_RADIO_NETWORK_ID
+//
+// L'ID logique de la locomotive sélectionnée n'est
+// PAS utilisé comme adresse NRF24L01.
+//
+// Il est placé dans :
+//
+//     packet.destination
+//
+// Le canal radio est configuré directement dans
+// radio.init(), conformément à l'API réelle
+// de NRFLite.
+//==================================================
 
-    if (
-        !radio.init(
-            RADIO_ID,
-            PIN_NRF_CE,
-            PIN_NRF_CSN
-        )
+```
+if (
+    !radio.init(
+        RADIO_ID,
+        PIN_NRF_CE,
+        PIN_NRF_CSN,
+        NRFLite::BITRATE2MBPS,
+        RADIO_CHANNEL
     )
+)
+{
+    Serial.println(
+        F("ERREUR : NRF24L01 NON DETECTE")
+    );
+
+
+    //================================================
+    // Blocage en cas d'erreur radio
+    //================================================
+
+    while (1)
     {
-        Serial.println(
-            F("ERREUR : NRF24L01 NON DETECTE")
-        );
-
-
-        //================================================
-        // Blocage en cas d'erreur radio
-        //================================================
-
-        while (1)
-        {
-            // Sécurité :
-            // la télécommande ne démarre pas
-            // sans communication radio.
-        }
+        // Sécurité :
+        // la télécommande ne démarre pas
+        // sans communication radio.
     }
-
-
-    //==================================================
-    // Mémorisation de l'ID de la locomotive active
-    //
-    // La radio est initialisée avec son propre ID,
-    // puis les transmissions sont envoyées vers
-    // state.loco.
-    //==================================================
-
-    currentRadioId =
-        state.loco;
-
-
-    radioInitialized =
-        true;
-
-
-    //==================================================
-    // Diagnostic
-    //==================================================
-
-    Serial.print(
-        F("NRF24L01 OK - EMETTEUR ID : ")
-    );
-
-    Serial.println(
-        RADIO_ID
-    );
-
-
-    Serial.print(
-        F("LOCO DESTINATION ID : ")
-    );
-
-    Serial.println(
-        currentRadioId
-    );
 }
 
 
-//======================================================
-// Changement de locomotive
-//
-// IMPORTANT :
-// Le NRF24L01 de l'émetteur conserve son propre
-// identifiant RADIO_ID.
-//
-// Il n'est PAS réinitialisé avec l'ID de la locomotive.
-//
-// L'ID de la locomotive est uniquement utilisé comme
-// adresse de destination lors de radio.send().
-//
-// Cette méthode est identique au fonctionnement V2
-// qui fonctionne avec les locomotives 10, 11 et 12.
-//======================================================
+//==================================================
+// Etat radio initialisé
+//==================================================
 
-static void Radio_SelectLoco(
-    uint8_t newRadioId
-)
-{
-    //==================================================
-    // Vérification
-    //==================================================
-
-    if (
-        newRadioId == currentRadioId
-    )
-    {
-        return;
-    }
+radioInitialized = true;
 
 
-    //==================================================
-    // Diagnostic
-    //==================================================
+//==================================================
+// Diagnostic
+//==================================================
 
-    Serial.print(
-        F("CHANGEMENT LOCO : ")
-    );
-
-    Serial.print(
-        currentRadioId
-    );
-
-    Serial.print(
-        F(" -> ")
-    );
-
-    Serial.println(
-        newRadioId
-    );
+Serial.println(
+    F("NRF24L01 OK - EMETTEUR INITIALISE")
+);
 
 
-    //==================================================
-    // Mémorisation du nouvel ID de destination
-    //
-    // IMPORTANT :
-    // On ne fait PAS de radio.init() ici.
-    //
-    // La radio reste configurée avec RADIO_ID = 1.
-    //==================================================
+Serial.print(
+    F("EMETTEUR RADIO ID : ")
+);
 
-    currentRadioId =
-        newRadioId;
+Serial.println(
+    RADIO_ID
+);
 
 
-    Serial.print(
-        F("DESTINATION RADIO CONFIGUREE - LOCO ID : ")
-    );
+Serial.print(
+    F("LOCO DESTINATION : ")
+);
 
-    Serial.println(
-        currentRadioId
-    );
+Serial.println(
+    state.loco
+);
+
+
+Serial.print(
+    F("RESEAU RADIO GDCC : ")
+);
+
+Serial.println(
+    GDCC_RADIO_NETWORK_ID
+);
+
+
+Serial.print(
+    F("CANAL RADIO : ")
+);
+
+Serial.println(
+    RADIO_CHANNEL
+);
+```
+
 }
-
 
 //======================================================
 // Transmission d'un paquet radio
 //======================================================
 
 void Radio_Send(
-    const HandsetState &state
+const HandsetState &state
 )
 {
-    //==================================================
-    // Vérification de l'initialisation
-    //==================================================
+//==================================================
+// Vérification de l'initialisation
+//==================================================
 
-    if (
-        !radioInitialized
-    )
-    {
-        return;
-    }
-
-
-    //==================================================
-    // Vérification du changement de locomotive
-    //
-    // Si le sélecteur 12 positions a changé de position,
-    // l'adresse de destination change également.
-    //==================================================
-
-    if (
-        state.loco != currentRadioId
-    )
-    {
-        Radio_SelectLoco(
-            state.loco
-        );
-    }
+```
+if (
+    !radioInitialized
+)
+{
+    return;
+}
 
 
-    //==================================================
-    // Création du paquet GDCC V3.1
-    //==================================================
+//==================================================
+// Création du paquet GDCC V4.0
+//==================================================
 
-    RadioPacket packet;
-
-
-    //==================================================
-    // Vitesse
-    //
-    // 0   = arrêt
-    // 255 = vitesse maximale
-    //==================================================
-
-    packet.throttle =
-        state.throttle;
+RadioPacket packet;
 
 
-    //==================================================
-    // Direction
-    //
-    // 0 = arrière
-    // 1 = avant
-    //==================================================
+//==================================================
+// Destination logique
+//
+// L'ID de la locomotive est transporté directement
+// dans la trame.
+//
+// Il ne correspond PAS à l'adresse radio physique.
+//==================================================
 
-    packet.direction =
-        state.directionForward
-        ? 1
-        : 0;
-
-
-    //==================================================
-    // Arrêt d'urgence
-    //
-    // 0 = normal
-    // 1 = ARU actif
-    //==================================================
-
-    packet.ARU =
-        state.emergencyStop
-        ? 1
-        : 0;
+packet.destination =
+    state.loco;
 
 
-    //==================================================
-    // Eclairage
-    //
-    // 0 = éteint
-    // 1 = allumé
-    //==================================================
+//==================================================
+// Type de commande
+//
+// V4.0 :
+// uniquement CMD_DRIVE.
+//==================================================
 
-    packet.LIGHT_Value =
-        state.light
-        ? 1
-        : 0;
+packet.command =
+    CMD_DRIVE;
 
 
-    //==================================================
-    // Transmission radio
-    //
-    // L'émetteur utilise toujours RADIO_ID = 1.
-    //
-    // La locomotive sélectionnée est l'adresse
-    // de destination.
-    //==================================================
+//==================================================
+// Vitesse
+//
+//   0   = arrêt
+//   255 = vitesse maximale
+//==================================================
 
-    radio.send(
-        currentRadioId,
-        &packet,
-        sizeof(packet)
-    );
+packet.throttle =
+    state.throttle;
+
+
+//==================================================
+// Direction
+//
+//   0 = arrière
+//   1 = avant
+//==================================================
+
+packet.direction =
+    state.directionForward
+    ? 1
+    : 0;
+
+
+//==================================================
+// Arrêt d'urgence
+//
+//   0 = normal
+//   1 = actif
+//
+// Le champ est transmis dans la trame V4.0.
+//==================================================
+
+packet.ARU =
+    state.emergencyStop
+    ? 1
+    : 0;
+
+
+//==================================================
+// Eclairage
+//
+//   0 = éteint
+//   1 = allumé
+//==================================================
+
+packet.LIGHT_Value =
+    state.light
+    ? 1
+    : 0;
+
+
+//==================================================
+// Transmission radio V4.0
+//
+// Destination physique :
+//
+//     GDCC_RADIO_NETWORK_ID
+//
+// Destination logique :
+//
+//     packet.destination
+//
+// Mode de transmission :
+//
+//     NRFLite::NO_ACK
+//
+// Le NRF24L01 transmet le paquet une seule fois.
+//
+// Aucun ACK n'est demandé au récepteur.
+//
+// Aucune retransmission automatique n'est effectuée
+// en cas de perte du paquet.
+//==================================================
+
+radio.send(
+    GDCC_RADIO_NETWORK_ID,
+    &packet,
+    sizeof(packet),
+    NRFLite::NO_ACK
+);
+```
+
 }
