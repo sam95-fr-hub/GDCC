@@ -30,7 +30,7 @@
 // par la télécommande GDCC.
 //
 
-#define RADIO_ID 10
+#define LOCO_ID 10
 
 
 //======================================================

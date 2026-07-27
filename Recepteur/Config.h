@@ -3,7 +3,7 @@
  * GDCC
  * Configuration générale du récepteur locomotive
  *
- * Version V3.2
+ * Version V4.0
  * Architecture multi-locomotives
  *
  * Ce fichier sélectionne automatiquement la configuration
@@ -63,6 +63,70 @@
     #error "ERREUR : LOCO_CONFIG invalide. Utiliser 10, 11 ou 12."
 
 #endif
+
+
+//======================================================
+// RESEAU RADIO GDCC
+//======================================================
+//
+// Adresse physique commune du réseau radio GDCC.
+//
+// Cette valeur doit être STRICTEMENT IDENTIQUE à celle
+// utilisée par la télécommande.
+//
+// Télécommande :
+//
+//     GDCC_RADIO_NETWORK_ID = 200
+//
+// Tous les récepteurs utilisent également :
+//
+//     GDCC_RADIO_NETWORK_ID = 200
+//
+// L'identifiant individuel de chaque locomotive n'est
+// PAS cette adresse.
+//
+// Il est défini dans Config_LocoXX.h avec :
+//
+//     #define RADIO_ID XX
+//
+// Exemple pour la loco 12 :
+//
+//     RADIO_ID = 12
+//
+// La télécommande envoie alors un paquet contenant :
+//
+//     packet.destination = 12
+//
+// vers l'adresse radio physique commune :
+//
+//     GDCC_RADIO_NETWORK_ID = 200
+//
+// Chaque récepteur reçoit le paquet et vérifie ensuite
+// si la destination correspond à son propre RADIO_ID.
+//
+//======================================================
+
+#define GDCC_RADIO_NETWORK_ID 200
+
+
+//======================================================
+// CANAL RADIO
+//======================================================
+//
+// Le canal doit être STRICTEMENT IDENTIQUE sur :
+//
+//   - la télécommande
+//   - toutes les locomotives
+//
+// NRFLite accepte les canaux de 0 à 125.
+//
+// Configuration actuelle :
+//
+//     RADIO_CHANNEL = 100
+//
+//======================================================
+
+#define RADIO_CHANNEL 100
 
 
 #endif
