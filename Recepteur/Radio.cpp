@@ -37,7 +37,7 @@ Serial.println(
 F("Initialisation NRF24L01...")
 );
 
-```
+
 //==================================================
 // Initialisation du NRF24L01
 //
@@ -153,7 +153,7 @@ Serial.println(
 Serial.println(
     F("RECEPTEUR PRET")
 );
-```
+
 
 }
 
@@ -167,7 +167,7 @@ bool Radio_Available()
 // Vérification de l'initialisation
 //==================================================
 
-```
+
 if (
     !radioInitialized
 )
@@ -188,7 +188,7 @@ if (
 return (
     radio.hasData() > 0
 );
-```
+
 
 }
 
@@ -204,7 +204,7 @@ RadioPacket &packet
 // Vérification de l'initialisation
 //==================================================
 
-```
+
 if (
     !radioInitialized
 )
@@ -396,6 +396,6 @@ Serial.println(
 //==================================================
 
 return true;
-```
+
 
 }

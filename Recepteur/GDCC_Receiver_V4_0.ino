@@ -426,7 +426,7 @@ if (
 
 #if BATTERY_MONITOR_ENABLED
 
-```
+
         else if (
             Battery_IsLow()
         )
@@ -449,7 +449,7 @@ if (
 
             Functions_LightOff();
         }
-```
+
 
 #endif
 
@@ -578,7 +578,7 @@ if (
 //     BATTERY_MONITOR_ENABLED == true
 //
 //==================================================
-```
+
 
 #if BATTERY_MONITOR_ENABLED
 
