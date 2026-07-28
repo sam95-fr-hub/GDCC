@@ -3,7 +3,7 @@
  * GDCC
  * Gestion des fonctions locomotive
  *
- * Version V3.1
+ * Version V4.1
  * Architecture modulaire
  *
  ******************************************************************************/
@@ -36,6 +36,5 @@ void Functions_LightOn();
 //======================================================
 
 void Functions_LightOff();
-
 
 #endif

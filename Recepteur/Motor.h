@@ -3,7 +3,7 @@
  * GDCC
  * Gestion du moteur locomotive
  *
- * Version V3.1
+ * Version V4.1
  * Architecture modulaire
  *
  ******************************************************************************/
@@ -49,6 +49,15 @@ void Motor_SetSpeed(
 
 //======================================================
 // Arrêt immédiat du moteur
+//
+// Utilisé notamment par :
+//
+//   - ARU broadcast
+//   - batterie faible
+//   - perte de liaison radio
+//
+// L'arrêt ne modifie pas la direction mémorisée.
+// La vitesse interne est remise à zéro.
 //======================================================
 
 void Motor_Stop();

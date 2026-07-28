@@ -1,12 +1,10 @@
 /******************************************************************************
 *
-
 * GDCC RECEPTEUR
 * Communication radio NRF24L01
 *
-* Version V4.0
+* Version V4.1
 *
-
 ******************************************************************************/
 
 #ifndef RADIO_H
@@ -19,91 +17,39 @@
 //======================================================
 // Initialisation du module radio
 //======================================================
-//
-// Le NRF24L01 du récepteur est configuré pour écouter
-// l'adresse radio physique commune du réseau GDCC.
-//
-// Cette adresse est définie dans Config.h par :
-//
-//     GDCC_RADIO_NETWORK_ID
-//
-// Toutes les locomotives du réseau utilisent cette
-// même adresse radio physique.
-//
-// L'identité logique de chaque locomotive est définie
-// par :
-//
-//     LOCO_ID
-//
-// dans le fichier Config.h correspondant.
-//
-// Le canal radio est défini dans Config.h par :
-//
-//     RADIO_CHANNEL
-//
-// L'ID logique de la locomotive et l'adresse physique
-// du réseau sont donc deux notions distinctes.
-//
-//     Adresse physique NRF24L01
-//         = GDCC_RADIO_NETWORK_ID
-//
-//     Identité logique locomotive
-//         = LOCO_ID
-//
-//     Destination dans le paquet
-//         = RadioPacket.destination
-//======================================================
 
 void Radio_Init();
+
 
 //======================================================
 // Vérification de la réception d'un paquet
 //======================================================
-//
-// Retourne :
-//
-//     true  = un paquet radio est disponible
-//     false = aucun paquet disponible
-//
-// IMPORTANT :
-//
-// En V4.0, toutes les locomotives du réseau écoutent
-// la même adresse radio physique.
-//
-// Le filtrage par LOCO_ID est effectué par
-// Radio_Receive().
-//
-// Radio_Available() ne vérifie donc pas si le paquet
-// est destiné à cette locomotive.
-//======================================================
 
 bool Radio_Available();
 
+
 //======================================================
 // Réception d'un paquet radio
-//======================================================
 //
-// Retourne :
+// V4.1
 //
-//     true  = paquet reçu et destiné à cette locomotive
-//     false = aucun paquet ou paquet destiné à une
-//             autre locomotive
+// Un paquet est accepté si :
 //
-// Un paquet destiné à une autre locomotive est lu
-// puis ignoré.
+//     packet.destination == LOCO_ID
 //
-// V4.0 :
+// ou :
 //
-// Seule la commande CMD_DRIVE est acceptée.
+//     packet.destination == GDCC_DEST_BROADCAST
 //
-// Le paquet est reçu sans ACK côté radio.
+// Le broadcast est utilisé pour les commandes globales
+// de sécurité, notamment l'ARU.
 //
-// Le récepteur ne renvoie donc aucune confirmation
-// automatique à la télécommande.
+// Les commandes broadcast normales ne sont pas
+// acceptées comme commandes de conduite.
 //======================================================
 
 bool Radio_Receive(
-RadioPacket &packet
+    RadioPacket &packet
 );
 
 #endif

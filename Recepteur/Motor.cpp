@@ -3,7 +3,7 @@
  * GDCC
  * Gestion du moteur locomotive
  *
- * Version V3.2
+ * Version V4.1
  * Architecture modulaire
  *
  * Drivers supportés :
@@ -372,6 +372,25 @@ void Motor_SetSpeed(
 
 //======================================================
 // Arrêt immédiat du moteur
+//======================================================
+//
+// Cette fonction constitue le point d'arrêt physique
+// commun utilisé par toutes les sécurités du récepteur.
+//
+// Elle est appelée notamment lorsque :
+//
+//   - un ARU broadcast est reçu
+//   - la batterie est trop faible
+//   - la liaison radio est perdue
+//   - le récepteur démarre
+//
+// L'ARU ne modifie pas currentDirection.
+// currentSpeed est remis à zéro.
+//
+// Après un ARU, une nouvelle commande normale reçue
+// pour cette locomotive devra explicitement définir
+// la direction et la vitesse avant tout redémarrage.
+//
 //======================================================
 
 void Motor_Stop()

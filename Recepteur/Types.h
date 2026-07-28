@@ -4,7 +4,7 @@
 * GDCC RECEPTEUR
 * Structures de données du récepteur
 *
-* Version V4.0
+* Version V4.1
 *
 
 ******************************************************************************/
@@ -19,25 +19,34 @@
 //======================================================
 
 // Commande normale de conduite
-#define CMD_DRIVE              1
+#define CMD_DRIVE                  1
 
-// Réservé V4.1
-#define CMD_EMERGENCY_STOP     2
+// Entrée en arrêt d'urgence global
+#define CMD_EMERGENCY_STOP         2
 
 // Réservé V4.2
-#define CMD_MEM_ON             3
-#define CMD_MEM_OFF            4
+#define CMD_MEM_ON                 3
+
+// Réservé V4.2
+#define CMD_MEM_OFF                4
+
+// Sortie de l'arrêt d'urgence global
+#define CMD_EMERGENCY_RELEASE      5
 
 //======================================================
 // Destination broadcast
+//======================================================
 //
-// Réservée aux futures commandes globales.
+// 255 = commande destinée à toutes les locomotives
+//
+// Utilisé notamment pour les commandes d'arrêt
+// d'urgence global.
 //======================================================
 
-#define GDCC_DEST_BROADCAST    255
+#define GDCC_DEST_BROADCAST        255
 
 //======================================================
-// Paquet de commande radio GDCC V4.0
+// Paquet de commande radio GDCC V4.1
 //
 // DOIT être strictement identique à celui de la
 // télécommande.
@@ -59,20 +68,7 @@ struct RadioPacket
 //
 // ID de la locomotive destinataire.
 //
-// Exemples :
-//   10 = Loco 10
-//   11 = Loco 11
-//   12 = Loco 12
-//
-// 255 :
-//   destination broadcast réservée aux futures
-//   commandes globales.
-//
-// IMPORTANT :
-//
-// Ce champ correspond à l'identifiant logique
-// de la locomotive et non à l'adresse physique
-// du NRF24L01.
+// 255 = destination broadcast.
 //==================================================
 
 
@@ -82,8 +78,9 @@ uint8_t destination;
 //==================================================
 // Type de commande
 //
-// V4.0 :
-//   CMD_DRIVE
+// CMD_DRIVE
+// CMD_EMERGENCY_STOP
+// CMD_EMERGENCY_RELEASE
 //==================================================
 
 uint8_t command;
@@ -102,8 +99,8 @@ uint8_t throttle;
 //==================================================
 // Direction
 //
-//   0 = marche arrière
-//   1 = marche avant
+//   0 = arrière
+//   1 = avant
 //==================================================
 
 uint8_t direction;
@@ -115,7 +112,8 @@ uint8_t direction;
 //   0 = fonctionnement normal
 //   1 = ARU actif
 //
-// Le champ est transmis dans la trame V4.0.
+// Pour les commandes broadcast ARU, la commande
+// elle-même indique l'état de l'ARU.
 //==================================================
 
 uint8_t ARU;

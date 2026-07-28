@@ -1,10 +1,9 @@
-
 /******************************************************************************
  *
  * GDCC
  * Gestion des fonctions locomotive
  *
- * Version V3.2
+ * Version V4.1
  * Architecture modulaire
  *
  ******************************************************************************/
@@ -19,15 +18,7 @@
 
 void Functions_Init()
 {
-    //==================================================
-    // Configuration selon le type d'éclairage
-    //==================================================
-
     #if defined(LIGHT_MODE_L298N)
-
-        //==============================================
-        // Eclairage via deuxième pont du L298N
-        //==============================================
 
         pinMode(
             PIN_LIGHT_IN3,
@@ -41,10 +32,6 @@ void Functions_Init()
 
     #elif defined(LIGHT_MODE_LED)
 
-        //==============================================
-        // Eclairage LED directement sur Arduino
-        //==============================================
-
         pinMode(
             PIN_LIGHT_LED,
             OUTPUT
@@ -52,10 +39,6 @@ void Functions_Init()
 
     #endif
 
-
-    //==================================================
-    // Etat initial sécurisé
-    //==================================================
 
     Functions_LightOff();
 }
@@ -67,10 +50,6 @@ void Functions_Init()
 
 void Functions_LightOn()
 {
-    //==================================================
-    // Eclairage via L298N
-    //==================================================
-
     #if defined(LIGHT_MODE_L298N)
 
         digitalWrite(
@@ -84,10 +63,6 @@ void Functions_LightOn()
         );
 
 
-    //==================================================
-    // Eclairage LED directement sur Arduino
-    //==================================================
-
     #elif defined(LIGHT_MODE_LED)
 
         digitalWrite(
@@ -96,13 +71,9 @@ void Functions_LightOn()
         );
 
 
-    //==================================================
-    // Aucun éclairage
-    //==================================================
-
     #elif defined(LIGHT_MODE_NONE)
 
-        // Rien à faire.
+        // Aucun éclairage.
 
 
     #endif
@@ -115,10 +86,6 @@ void Functions_LightOn()
 
 void Functions_LightOff()
 {
-    //==================================================
-    // Eclairage via L298N
-    //==================================================
-
     #if defined(LIGHT_MODE_L298N)
 
         digitalWrite(
@@ -132,10 +99,6 @@ void Functions_LightOff()
         );
 
 
-    //==================================================
-    // Eclairage LED directement sur Arduino
-    //==================================================
-
     #elif defined(LIGHT_MODE_LED)
 
         digitalWrite(
@@ -144,13 +107,9 @@ void Functions_LightOff()
         );
 
 
-    //==================================================
-    // Aucun éclairage
-    //==================================================
-
     #elif defined(LIGHT_MODE_NONE)
 
-        // Rien à faire.
+        // Aucun éclairage.
 
 
     #endif
