@@ -1,12 +1,10 @@
 /******************************************************************************
 *
-
 * GDCC
 * Communication radio NRF24L01
 *
-* Version V4.0
+* Version V4.1
 *
-
 ******************************************************************************/
 
 #ifndef RADIO_H
@@ -16,75 +14,71 @@
 
 #include "Types.h"
 
+
 //======================================================
 // Initialisation du module radio
+//======================================================
 //
-// V4.0
+// Initialise le NRF24L01 de la télécommande.
 //
-// Le NRF24L01 de la télécommande est initialisé avec
-// son propre identifiant radio.
+// RADIO_ID : identifiant radio physique de la
+//            télécommande.
 //
-// Les locomotives utilisent toutes la même adresse
-// radio physique de réseau.
+// GDCC_RADIO_NETWORK_ID : adresse radio physique
+//                         commune aux locomotives.
 //
-// L'identifiant logique de la locomotive n'est PLUS
-// utilisé comme adresse NRF24L01.
-//
-// Il est transmis dans :
-//
-//     RadioPacket.destination
-//
-// L'adresse radio physique commune est définie dans
-// Config.h par :
-//
-//     GDCC_RADIO_NETWORK_ID
-//
-// Le canal radio commun est défini dans Config.h par :
-//
-//     RADIO_CHANNEL
+// state.loco : identifiant logique de la locomotive
+//              actuellement sélectionnée.
 //======================================================
 
 void Radio_Init(
-const HandsetState &state
+    const HandsetState &state
 );
+
 
 //======================================================
 // Transmission d'un paquet radio
+//======================================================
 //
-// Protocole GDCC V4.0
+// Fonctionnement normal :
 //
-// La trame contient :
+//     destination = state.loco
+//     command     = CMD_DRIVE
 //
-//   destination
-//   command
-//   throttle
-//   direction
-//   ARU
-//   LIGHT_Value
+// ARU actif :
 //
-// En V4.0, command = CMD_DRIVE.
+//     destination = GDCC_DEST_BROADCAST
+//     command     = CMD_EMERGENCY_STOP
 //
-// La destination correspond à l'ID logique de la
-// locomotive sélectionnée.
+//     L'ARU est envoyé périodiquement en broadcast
+//     tant que l'état emergencyStop est actif.
 //
-// Exemple :
+// Sortie ARU :
 //
-//   destination = 10
+//     destination = GDCC_DEST_BROADCAST
+//     command     = CMD_EMERGENCY_RELEASE
 //
-// La trame est envoyée vers l'adresse radio physique
-// commune utilisée par tous les récepteurs.
+//     Cette commande est envoyée lors de la transition
+//     ARU actif -> ARU inactif.
+//
+// La sortie d'ARU ne constitue pas un ordre de marche.
+// Les locomotives doivent rester arrêtées et attendre
+// un nouvel ordre CMD_DRIVE.
+//
+// Priorité des commandes :
+//
+//     1. CMD_EMERGENCY_STOP en broadcast
+//     2. CMD_EMERGENCY_RELEASE en broadcast
+//     3. CMD_DRIVE vers la locomotive sélectionnée
+//
+// Lorsque l'ARU est actif, aucune commande CMD_DRIVE
+// ne doit être envoyée.
 //
 // La transmission utilise NRFLite::NO_ACK.
-//
-// Le paquet est donc envoyé une seule fois sans
-// demander d'accusé de réception au récepteur.
-//
-// Les retransmissions automatiques du NRF24L01 ne sont
-// pas utilisées pour les commandes GDCC V4.0.
 //======================================================
 
 void Radio_Send(
-const HandsetState &state
+    const HandsetState &state
 );
 
 #endif
